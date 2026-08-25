@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Questionnaire FE — STCS</title>
+<style>
+:root{
+  --blue:#1F5C99;
+  --blue-dark:#164873;
+  --blue-pale:#EAF1F8;
+  --orange:#FCE4D6;
+  --orange-line:#E8A87C;
+  --grey:#D9D9D9;
+  --grey-line:#BFBFBF;
+  --ink:#1E2530;
+  --ink-soft:#5B6472;
+  --paper:#FFFFFF;
+  --bg:#F3F5F8;
+  --ok:#2E7D32;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;}
+input,textarea,select{font-family:inherit;}
+
+/* ===== Top bar ===== */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:var(--blue);
+  color:#fff;
+  display:flex; align-items:center; gap:14px;
+  padding:10px 18px;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+.topbar .logo{font-weight:800; letter-spacing:.5px; font-size:15px;}
+.topbar .logo small{display:block; font-weight:400; font-size:9px; letter-spacing:1.5px; opacity:.8;}
+.topbar .title{font-size:13px; opacity:.92; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.topbar .progress-wrap{display:flex; align-items:center; gap:8px; font-size:12px;}
+.progress-track{width:110px; height:6px; background:rgba(255,255,255,.25); border-radius:4px; overflow:hidden;}
+.progress-fill{height:100%; background:#fff; border-radius:4px; transition:width .25s ease;}
+.mode-toggle{display:flex; background:rgba(255,255,255,.15); border-radius:8px; padding:2px; gap:2px;}
+.mode-toggle button{
+  border:none; background:transparent; color:#fff; padding:7px 14px; border-radius:6px;
+  font-size:12.5px; font-weight:600; opacity:.75;
+}
+.mode-toggle button.active{background:#fff; color:var(--blue); opacity:1;}
+.iconbtn{
+  border:1px solid rgba(255,255,255,.4); background:transparent; color:#fff;
+  border-radius:6px; padding:7px 11px; font-size:12px; font-weight:600;
+  display:flex; align-items:center; gap:6px;
+}
+.iconbtn:hover{background:rgba(255,255,255,.15);}
+
+/* ===== Audio / Microphone ===== */
+.field-with-audio{display:flex; gap:8px; align-items:flex-start;}
+.field-with-audio .field{flex:1;}
+.audio-btn{
+  border:1px solid #D4D9E0; background:#fff; color:var(--blue-dark); border-radius:8px;
+  padding:9px 12px; font-size:18px; cursor:pointer; flex:none; height:fit-content;
+  margin-top:22px; transition:all .15s ease; display:flex; align-items:center; justify-content:center;
+  min-width:40px; min-height:40px;
+}
+.audio-btn:hover{background:var(--blue-pale); border-color:var(--blue);}
+.audio-btn:active{background:var(--blue); color:#fff;}
+.audio-btn.recording{
+  background:var(--blue); color:#fff; animation:pulse 0.6s infinite;
+  border-color:var(--blue);
+}
+.audio-btn.unsupported{opacity:.4; cursor:not-allowed;}
+.audio-btn.error{background:#ffebee; color:#B3261E; border-color:#E8A8A2;}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(31,92,153,.7);}
+  70%{box-shadow:0 0 0 8px rgba(31,92,153,0);}
+  100%{box-shadow:0 0 0 0 rgba(31,92,153,0);}
+}
+.audio-hint{font-size:10.5px; color:var(--ink-soft); margin-top:4px; min-height:18px;}
+
+/* ===== Layout ===== */
+.shell{display:flex; max-width:1500px; margin:0 auto; min-height:calc(100vh - 52px);}
+.nav{
+  width:250px; flex:none; background:var(--paper); border-right:1px solid #E4E8ED;
+  padding:14px 10px; position:sticky; top:52px; height:calc(100vh - 52px); overflow-y:auto;
+}
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:8px; margin-bottom:2px;
+  font-size:12.8px; color:var(--ink-soft); cursor:pointer; border:1px solid transparent;
+}
+.nav-item:hover{background:var(--blue-pale);}
+.nav-item.active{background:var(--blue-pale); color:var(--blue-dark); font-weight:700; border-color:#CFE0F0;}
+.nav-num{
+  width:20px; height:20px; border-radius:50%; background:var(--grey); color:#697080;
+  font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none;
+}
+.nav-item.done .nav-num{background:var(--ok); color:#fff;}
+.nav-item.active .nav-num{background:var(--blue); color:#fff;}
+
+.main{flex:1; min-width:0; padding:26px 30px 80px;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ===== Form styling ===== */
+.card{
+  background:var(--paper); border:1px solid #E4E8ED; border-radius:12px;
+  padding:22px 24px; margin-bottom:18px;
+}
+.card h2{
+  margin:0 0 4px; font-size:18px; color:var(--blue-dark); font-weight:800;
+}
+.card .hint{margin:0 0 18px; font-size:12.5px; color:var(--ink-soft);}
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px 18px;}
+.grid.g3{grid-template-columns:repeat(3,1fr);}
+.grid.g1{grid-template-columns:1fr;}
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:12px; font-weight:700; color:var(--ink);}
+.field .sub{font-weight:400; color:var(--ink-soft); font-size:11px;}
+.field input[type=text], .field input[type=date], .field input[type=number], .field textarea, .field select{
+  border:1px solid #D4D9E0; border-radius:8px; padding:9px 11px; font-size:13.5px; color:var(--ink);
+  background:#FBFCFE; width:100%;
+}
+.field input:focus, .field textarea:focus, .field select:focus{
+  outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px var(--blue-pale);
+}
+.field textarea{resize:vertical; min-height:64px; line-height:1.45;}
+.field .counter{font-size:10.5px; color:var(--ink-soft); text-align:right;}
+.field .counter.over{color:#B3261E; font-weight:700;}
+
+.subgrid-title{font-size:12.5px; font-weight:800; color:var(--blue-dark); margin:20px 0 10px; text-transform:uppercase; letter-spacing:.4px;}
+.subgrid-title:first-child{margin-top:0;}
+
+.naf-status{
+  background:var(--blue-pale); border:1px solid #CFE0F0; border-radius:8px;
+  padding:12px 14px; font-size:12.5px; color:var(--ink); margin:14px 0 4px; line-height:1.6;
+}
+.naf-status.muted{background:#F6F8FA; border-color:#E4E8ED; color:var(--ink-soft); font-style:italic;}
+
+.naf-badge{
+  display:inline-block; background:var(--orange); color:#7A3B1D; font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle;
+}
+
+/* mini table forms (fonctionnement, effectifs, sinistralite, horaires, locaux) */
+.mtable{width:100%; border-collapse:collapse; margin-bottom:6px;}
+.mtable th{
+  background:var(--grey); color:var(--ink); font-size:11px; text-align:left; padding:8px 9px;
+  border:1px solid #C9CED6; font-weight:700;
+}
+.mtable td{border:1px solid #E1E5EA; padding:6px 7px; vertical-align:middle;}
+.mtable td.label{background:#F6F8FA; font-weight:700; font-size:12px; white-space:nowrap;}
+.mtable input, .mtable select{
+  width:100%; border:1px solid #D4D9E0; border-radius:6px; padding:6px 7px; font-size:12.5px; background:#FBFCFE;
+}
+.mtable input:focus, .mtable select:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-pale);}
+.mtable .total-cell{font-weight:800; text-align:center; background:#F6F8FA;}
+
+/* dynamic row tables (postes, risques) */
+.dyn-row{
+  border:1px solid #E1E5EA; border-radius:10px; padding:14px; margin-bottom:10px; background:#FBFCFE; position:relative;
+}
+.dyn-row .row-num{
+  position:absolute; top:-9px; left:12px; background:var(--blue); color:#fff; font-size:10px; font-weight:800;
+  padding:2px 8px; border-radius:10px;
+}
+.dyn-row .remove-row{
+  position:absolute; top:-9px; right:12px; background:#fff; border:1px solid #E1B0A8; color:#B3261E;
+  font-size:10.5px; font-weight:700; padding:2px 9px; border-radius:10px;
+}
+.add-row-btn{
+  border:1.5px dashed #B9C6D6; background:transparent; color:var(--blue-dark); font-weight:700; font-size:12.5px;
+  padding:9px 14px; border-radius:8px; width:100%; margin-top:4px;
+}
+.add-row-btn:hover{background:var(--blue-pale);}
+
+.risk-quickset{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+.risk-chip{
+  border:1px solid #CFE0F0; background:var(--blue-pale); color:var(--blue-dark); font-size:11px; font-weight:600;
+  padding:5px 10px; border-radius:14px;
+}
+.risk-chip:hover{background:var(--blue); color:#fff;}
+
+.nav-footer{
+  display:flex; justify-content:space-between; align-items:center; margin-top:22px; gap:10px;
+}
+.navbtn{
+  border:1px solid #D4D9E0; background:#fff; color:var(--ink); font-weight:700; font-size:13px;
+  padding:10px 18px; border-radius:8px;
+}
+.navbtn.primary{background:var(--blue); color:#fff; border-color:var(--blue);}
+.navbtn:hover{filter:brightness(0.97);}
+.navbtn:disabled{opacity:.4; cursor:default;}
+
+/* ===== Preview ===== */
+.preview-wrap{max-width:900px; margin:0 auto; padding:26px 20px 90px;}
+.doc-toolbar{
+  display:flex; justify-content:flex-end; gap:10px; margin-bottom:16px;
+}
+.doc-btn{
+  border:1px solid var(--blue); background:var(--blue); color:#fff; font-weight:700; font-size:12.5px;
+  padding:10px 16px; border-radius:8px; display:flex; align-items:center; gap:7px;
+}
+.doc-btn.secondary{background:#fff; color:var(--blue);}
+.doc-btn:hover{filter:brightness(0.95);}
+
+.sheet{
+  background:#fff; border:1px solid #E1E5EA; box-shadow:0 1px 3px rgba(20,30,50,.06);
+  padding:34px 38px; margin-bottom:22px; border-radius:2px;
+}
+.sheet-legal{font-style:italic; font-size:10.5px; text-decoration:underline; color:#333; margin-bottom:14px;}
+.banner{display:flex; border:1px solid var(--grey-line); margin-bottom:20px;}
+.banner .logo-cell{
+  width:32%; display:flex; flex-direction:column; align-items:center; justify-content:center; border-right:1px solid var(--grey-line); padding:10px;
+}
+.banner .logo-cell b{color:var(--ok); font-size:19px; letter-spacing:1px;}
+.banner .logo-cell span{color:var(--ok); font-size:8px; letter-spacing:1.5px;}
+.banner .doc-cell{flex:1; display:flex; flex-direction:column;}
+.banner .doc-cell .r1{background:var(--blue); color:#fff; text-align:center; font-weight:800; font-size:13px; padding:8px; letter-spacing:.5px;}
+.banner .doc-cell .r2{text-align:center; font-weight:800; font-size:17px; padding:9px; border-top:1px solid var(--grey-line);}
+.sheet-title{text-align:center; color:var(--blue-dark); font-weight:800; font-size:21px; margin:18px 0 4px;}
+.sheet-sub{text-align:center; font-size:13px; color:#333; margin-bottom:18px;}
+.p1-cols{display:flex; gap:20px; margin-bottom:16px;}
+.p1-cols .left{flex:1; font-size:12.5px; line-height:1.9;}
+.p1-cols .photobox{width:150px; height:100px; border:1px solid var(--grey-line); flex:none;}
+.visit-block{font-size:12.5px; line-height:1.85; margin-bottom:14px;}
+.visit-block .vt{font-weight:700; margin-bottom:2px;}
+.visit-block .vi{padding-left:16px;}
+.desc-block{font-size:12.5px; margin-bottom:16px;}
+.desc-block .dt{font-weight:700; margin-bottom:4px;}
+.preco-box{border-top:2px solid var(--blue); border-bottom:2px solid var(--blue); padding:12px 0; margin-bottom:4px;}
+.preco-box h3{color:var(--blue-dark); font-size:13.5px; margin:0 0 10px;}
+.preco-item{background:var(--orange); font-size:12px; padding:8px 10px; margin-bottom:5px; border-radius:2px; line-height:1.5;}
+
+.psec h3{
+  color:var(--blue-dark); font-size:14px; border-bottom:2px solid var(--blue); padding-bottom:6px; margin:22px 0 10px;
+}
+.psec h4{font-size:12px; margin:12px 0 5px; font-weight:800;}
+.psec .pline{font-size:12px; margin:3px 0; padding-left:14px;}
+.psec .pcomment{font-size:11.5px; font-style:italic; color:#555; margin:8px 0 0;}
+.ptable{width:100%; border-collapse:collapse; font-size:11.5px; margin:6px 0 4px;}
+.ptable th{background:var(--grey); border:1px solid #C9CED6; padding:6px 7px; text-align:left; font-weight:700;}
+.ptable td{border:1px solid #E1E5EA; padding:6px 7px;}
+.ptable td.lbl{background:#F6F8FA; font-weight:700;}
+.ptable td.ctr{text-align:center;}
+.risk-table th{background:var(--blue); color:#fff;}
+.empty-note{color:#9AA2AD; font-style:italic;}
+.pagefoot{
+  display:flex; justify-content:space-between; font-size:9.5px; color:#8A93A0; border-top:1px solid #E1E5EA;
+  padding-top:8px; margin-top:20px;
+}
+
+@media (max-width: 980px){
+  .nav{display:none;}
+  .grid, .grid.g3{grid-template-columns:1fr;}
+  .p1-cols{flex-direction:column;}
+  .sheet{padding:20px 16px;}
+}
+
+@media print{
+  .topbar,.nav,.doc-toolbar,.nav-footer{display:none !important;}
+  .shell,.main{padding:0; margin:0;}
+  .sheet{box-shadow:none; border:none; page-break-after:always;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">STCS<small>PRÉVENTION · SANTÉ · TRAVAIL</small></div>
+  <div class="title" id="topTitle">Questionnaire de préparation — Fiche d'Entreprise</div>
+  <div class="progress-wrap">
+    <span id="progressLabel">0 / 15</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="mode-toggle">
+    <button id="btnModeForm" class="active">Formulaire</button>
+    <button id="btnModePreview">Aperçu FE</button>
+  </div>
+  <button class="iconbtn" id="btnReset">Nouvelle fiche</button>
+</div>
+
+<div class="shell">
+  <nav class="nav" id="navList"></nav>
+
+  <main class="main">
+    <div id="formPanels"></div>
+  </main>
+
+  <div class="preview-wrap" id="previewWrap" style="display:none;">
+    <div class="doc-toolbar">
+      <button class="doc-btn secondary" id="btnPrint">🖨️ Imprimer / PDF</button>
+      <button class="doc-btn" id="btnExportWord">⬇️ Exporter en Word (.doc)</button>
+    </div>
+    <div id="previewContent"></div>
+  </div>
+</div>
+
+<script>
+// ===== Constantes =====
+
+const NAV_SECTIONS = [
+  { id: 0,  key: 'garde', title: "Page de garde" },
+  { id: 1,  key: 's1',    title: "1. Renseignements administratifs" },
+  { id: 2,  key: 's2',    title: "2. Fonctionnement de l'entreprise" },
+  { id: 3,  key: 's3',    title: "3. Effectifs" },
+  { id: 4,  key: 's4',    title: "4. Sinistralité" },
+  { id: 5,  key: 's5',    title: "5. Organisation des secours" },
+  { id: 6,  key: 's6',    title: "6. Horaires de travail" },
+  { id: 7,  key: 's7',    title: "7. Entretien" },
+  { id: 8,  key: 's8',    title: "8. Postes de travail" },
+  { id: 9,  key: 's9',    title: "9. Ambiance générale" },
+  { id: 10, key: 's10',   title: "10. Locaux sociaux" },
+  { id: 11, key: 's11',   title: "11. Risques & prévention" },
+  { id: 12, key: 's12',   title: "12. Préconisations (conclusion)" },
+  { id: 13, key: 's13',   title: "13. Documents remis" },
+  { id: 14, key: 's14',   title: "14. Historique" },
+];
+
+const OUI_NON_OPTIONS = ["", "Oui", "Non", "Partiel", "Non concerné"];
+
+const RISK_LIST = [
+  "Chutes de hauteur",
+  "Chutes de plain-pied",
+  "Circulation / engins",
+  "Manutention manuelle",
+  "Gestes répétitifs / TMS",
+  "Équipements de travail (machines)",
+  "Risque électrique",
+  "Risque chimique",
+  "Risque biologique",
+  "Incendie / explosion",
+  "Bruit",
+  "Ambiance thermique",
+  "Éclairage",
+  "Vibrations",
+  "Risques psychosociaux (RPS)",
+  "Travail sur écran",
+  "Coactivité / entreprises extérieures",
+  "Risque routier",
+];
+
+// ================== BASE DE CONNAISSANCES NAF (préremplissage) ==================
+// NB : ces suggestions sont des points de départ génériques par métier-type.
+// Elles doivent systématiquement être vérifiées, adaptées et validées lors de la visite
+// et par le médecin du travail avant intégration définitive à la FE.
+function nr(risque, postes, elements, moyens, conseils) { return { risque, postes, elements, moyens, conseils }; }
+function np(intitule, groupe, taches) { return { intitule, groupe, taches, nb: "" }; }
+
+const NAF_PROFILES = {
+  metallurgie: {
+    postes: [
+      np("Régleur sur ligne de traitement", "Production", "Réglage des paramètres de la ligne, contrôle des bains, surveillance du process."),
+      np("Agent de traitement de surface", "Production", "Chargement/déchargement des pièces, immersion dans les bains, contrôle visuel."),
+      np("Agent de conditionnement et contrôle", "Production", "Conditionnement des pièces traitées, contrôle qualité, étiquetage."),
+    ],
+    risques: [
+      nr("Risque chimique", "Régleur, agent de traitement", "Bains de traitement contenant des produits classés CMR, manipulation manuelle des pièces.", "Ventilation générale, port de gants et lunettes.", "Renforcer la captation à la source (cf. INRS ED 6008 et stcs.fr/risque-chimique)."),
+      nr("Risque électrique", "Régleur, technicien de maintenance", "Armoires électriques de commande des lignes de traitement.", "Habilitation électrique du personnel intervenant.", "Vérifier la mise à jour des habilitations électriques (cf. NF C18-510 et stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols pouvant être rendus glissants par les projections de bains de traitement.", "Nettoyage régulier des sols.", "Mettre en place un revêtement de sol antidérapant en zone de traitement (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Agent de conditionnement", "Port de bacs de pièces métalliques entre postes.", "Aides à la manutention ponctuelles.", "Étudier l'acquisition d'un moyen de manutention mécanisé (cf. INRS ED 6094 et stcs.fr)."),
+      nr("Équipements de travail (machines)", "Régleur", "Ligne de traitement automatisée avec zones de convoyage.", "Protecteurs et arrêts d'urgence sur la ligne.", "Vérifier la conformité des protecteurs lors de la prochaine visite périodique (cf. INRS ED 6122)."),
+      nr("Bruit", "Ensemble de l'atelier", "Ambiance sonore générée par les convoyeurs et compresseurs.", "Aucun moyen de protection formalisé à ce jour.", "Réaliser un mesurage d'exposition sonore et envisager des protections auditives adaptées (cf. INRS ED 6035)."),
+      nr("Ambiance thermique", "Agent de traitement", "Proximité des bains chauffés pouvant générer une ambiance thermique élevée.", "Aération naturelle de l'atelier.", "Étudier une solution de ventilation localisée en période estivale (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Cadence liée au flux de production.", "Points d'équipe réguliers.", "Vous pouvez vous faire accompagner par le service de prévention pour objectiver la charge de travail (cf. INRS ED 6349)."),
+    ],
+  },
+  construction: {
+    postes: [
+      np("Maçon", "Production", "Réalisation de fondations, élévation de murs, coffrage et coulage béton."),
+      np("Manœuvre de chantier", "Production", "Approvisionnement du chantier, aide aux compagnons, nettoyage de zone."),
+      np("Chef d'équipe", "Encadrement", "Organisation du chantier, encadrement de l'équipe, relation client."),
+    ],
+    risques: [
+      nr("Chutes de hauteur", "Maçon, manœuvre", "Travaux en échafaudage ou en étage lors de l'élévation des murs.", "Échafaudages avec garde-corps.", "Vérifier systématiquement la conformité des échafaudages avant usage (cf. INRS ED 6109 et stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols de chantier encombrés, irréguliers ou boueux.", "Rangement partiel des zones de circulation.", "Organiser le rangement quotidien des zones de circulation (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Maçon, manœuvre", "Port de charges (parpaings, sacs de ciment, matériaux).", "Diable et brouette disponibles.", "Développer l'usage d'aides à la manutention mécanisées (cf. INRS ED 6094)."),
+      nr("Gestes répétitifs / TMS", "Maçon", "Gestes répétés de pose et de jointoiement en position contrainte.", "Rotation partielle des tâches.", "Sensibiliser aux gestes et postures, votre service de prévention peut intervenir sur ce sujet (cf. stcs.fr)."),
+      nr("Équipements de travail (machines)", "Maçon, manœuvre", "Utilisation de bétonnière, perforateur, meuleuse.", "Formation à l'utilisation des engins.", "Vérifier la mise à jour des vérifications périodiques des équipements (cf. INRS ED 6122)."),
+      nr("Bruit", "Ensemble de l'équipe", "Utilisation d'outils électroportatifs bruyants (perforateur, meuleuse).", "Casques antibruit disponibles.", "Vérifier le port effectif des protections auditives (cf. INRS ED 6035)."),
+      nr("Vibrations", "Maçon", "Utilisation prolongée d'outils vibrants (perforateur, marteau-piqueur).", "Rotation partielle sur les tâches vibrantes.", "Suivre l'exposition vibratoire journalière (cf. INRS ED 6018 et stcs.fr)."),
+      nr("Risque routier", "Chef d'équipe, manœuvre", "Déplacements quotidiens entre chantiers.", "Véhicules entretenus régulièrement.", "Rappeler les règles de conduite et de chargement des véhicules (cf. stcs.fr)."),
+    ],
+  },
+  auto: {
+    postes: [
+      np("Mécanicien", "Atelier", "Entretien et réparation mécanique des véhicules."),
+      np("Carrossier-peintre", "Atelier", "Réparation de carrosserie, préparation et application de peinture."),
+      np("Conseiller commercial", "Commercial", "Accueil client, vente de véhicules, suivi de dossier."),
+    ],
+    risques: [
+      nr("Risque chimique", "Carrossier-peintre", "Utilisation de peintures, solvants et produits de préparation en cabine.", "Cabine de peinture ventilée, EPI respiratoires.", "Vérifier le renouvellement d'air de la cabine et la disponibilité des FDS (cf. INRS ED 6008)."),
+      nr("Manutention manuelle", "Mécanicien", "Manipulation de pièces mécaniques lourdes (roues, moteurs).", "Pont élévateur et palans disponibles.", "Poursuivre l'usage systématique des aides à la manutention (cf. INRS ED 6094)."),
+      nr("Équipements de travail (machines)", "Mécanicien", "Utilisation de ponts élévateurs, outillage électroportatif.", "Vérifications périodiques des ponts.", "Vérifier la traçabilité des contrôles périodiques des ponts élévateurs (cf. INRS ED 6122)."),
+      nr("Bruit", "Atelier mécanique", "Ambiance sonore liée aux essais moteurs et outillage.", "Aucune protection auditive systématique.", "Étudier la mise à disposition de protections auditives adaptées au poste (cf. INRS ED 6035)."),
+      nr("Risque électrique", "Mécanicien", "Interventions sur véhicules électriques/hybrides.", "Habilitation électrique spécifique en cours de déploiement.", "S'assurer que le personnel intervenant sur véhicules électriques est habilité (cf. stcs.fr)."),
+      nr("Gestes répétitifs / TMS", "Mécanicien, carrossier", "Postures contraintes sous véhicule ou en carrosserie.", "Rotation partielle des tâches.", "Sensibiliser aux gestes et postures avec l'appui du service de prévention (cf. stcs.fr)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble de l'atelier", "Intervention ponctuelle de dépanneurs ou livreurs sur le site.", "Consignes d'accueil informelles.", "Formaliser un plan de circulation pour les intervenants extérieurs (cf. INRS ED 941)."),
+      nr("Incendie / explosion", "Carrossier-peintre", "Stockage de solvants et peintures inflammables.", "Extincteurs à proximité de la cabine.", "Vérifier la conformité du stockage des produits inflammables (cf. INRS ED 6008)."),
+    ],
+  },
+  commerce_detail: {
+    postes: [
+      np("Vendeur / conseiller de vente", "Vente", "Accueil et conseil client, encaissement, mise en rayon."),
+      np("Responsable de magasin", "Encadrement", "Gestion de l'équipe, des stocks et de l'activité commerciale."),
+      np("Employé de réserve", "Logistique", "Réception des livraisons, réassort, gestion de la réserve."),
+    ],
+    risques: [
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols de vente et de réserve pouvant être encombrés.", "Rangement régulier des espaces.", "Maintenir le dégagement des allées de circulation (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Employé de réserve, vendeur", "Port de cartons lors de la mise en rayon et du réassort.", "Diable disponible en réserve.", "Rappeler les techniques de manutention manuelle (cf. INRS ED 6094 et stcs.fr)."),
+      nr("Gestes répétitifs / TMS", "Vendeur", "Gestes répétés de mise en rayon et pliage.", "Aucun aménagement particulier.", "Sensibiliser aux gestes et postures adaptés au poste (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Vendeur, responsable de magasin", "Relation client en période d'affluence, objectifs commerciaux.", "Points d'équipe réguliers.", "Vous pouvez vous faire accompagner pour objectiver la charge relationnelle du poste (cf. INRS ED 6349)."),
+      nr("Éclairage", "Ensemble du personnel", "Niveau d'éclairement variable selon les zones du magasin.", "Éclairage général en place.", "Vérifier l'adéquation du niveau d'éclairement en zone de caisse et réserve (cf. INRS ED 6008)."),
+      nr("Travail sur écran", "Vendeur, responsable", "Utilisation de la caisse et du logiciel de gestion.", "Écrans récents disponibles.", "Veiller à l'ergonomie du poste de caisse (cf. INRS ED 924)."),
+      nr("Circulation / engins", "Employé de réserve", "Livraisons et déplacements de charges en réserve.", "Zone de livraison délimitée.", "Formaliser un plan de circulation pour les livraisons (cf. INRS ED 941)."),
+      nr("Incendie / explosion", "Ensemble du personnel", "Stockage de cartons et textiles en réserve.", "Extincteurs présents.", "Vérifier le dégagement des issues de secours en réserve (cf. stcs.fr)."),
+    ],
+  },
+  restauration: {
+    postes: [
+      np("Cuisinier", "Cuisine", "Préparation des plats, gestion des cuissons, respect des normes HACCP."),
+      np("Serveur", "Salle", "Accueil et service en salle, prise de commande, encaissement."),
+      np("Plongeur / aide de cuisine", "Cuisine", "Plonge, nettoyage du matériel et des locaux, aide à la préparation."),
+    ],
+    risques: [
+      nr("Risque chimique", "Plongeur, personnel de nettoyage", "Utilisation de produits d'entretien et de désinfection en cuisine.", "Gants disponibles au poste plonge.", "Vérifier la disponibilité des FDS des produits utilisés (cf. INRS ED 6008 et stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel de cuisine", "Sols de cuisine pouvant être rendus glissants en service.", "Tapis antidérapants au poste plonge.", "Étendre les revêtements antidérapants aux zones à risque (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Cuisinier, plongeur", "Port de contenants et de matières premières en cuisine.", "Aucun moyen mécanisé.", "Étudier les postes générant le plus de port de charges (cf. INRS ED 6094)."),
+      nr("Ambiance thermique", "Cuisinier", "Exposition à la chaleur des fourneaux et fours.", "Hotte d'extraction en cuisine.", "Vérifier l'efficacité de la ventilation en période de forte activité (cf. stcs.fr)."),
+      nr("Équipements de travail (machines)", "Cuisinier", "Utilisation de couteaux, trancheurs, robots de cuisine.", "Formation interne à l'utilisation.", "Vérifier la conformité des protecteurs des équipements tranchants (cf. INRS ED 6122)."),
+      nr("Risque électrique", "Cuisinier, plongeur", "Utilisation d'appareils électriques en ambiance humide.", "Prises étanches en zone plonge.", "Vérifier la conformité électrique des zones humides (cf. NF C15-100)."),
+      nr("Bruit", "Cuisine", "Ambiance sonore liée aux hottes, appareils et service.", "Aucune mesure spécifique.", "Étudier l'ambiance sonore en période de forte activité (cf. INRS ED 6035)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Rythme de travail soutenu en période de service.", "Organisation en équipe.", "Vous pouvez vous faire accompagner pour objectiver la charge de travail en coup de feu (cf. stcs.fr)."),
+    ],
+  },
+  transport: {
+    postes: [
+      np("Conducteur routier", "Exploitation", "Conduite, chargement/déchargement, relation client sur livraison."),
+      np("Agent d'exploitation", "Bureau", "Planification des tournées, suivi administratif des livraisons."),
+      np("Manutentionnaire / chargeur", "Logistique", "Chargement et déchargement des marchandises sur quai."),
+    ],
+    risques: [
+      nr("Risque routier", "Conducteur routier", "Conduite prolongée sur route et autoroute, toutes conditions météo.", "Véhicules entretenus, formation à la conduite.", "Poursuivre la sensibilisation au risque routier professionnel (cf. INRS ED 986 et stcs.fr)."),
+      nr("Manutention manuelle", "Conducteur, manutentionnaire", "Chargement et déchargement manuel de colis et palettes.", "Transpalettes disponibles.", "Généraliser l'usage des aides à la manutention (cf. INRS ED 6094)."),
+      nr("Chutes de hauteur", "Conducteur routier", "Montée et descente de cabine, accès à la bâche du véhicule.", "Marchepieds et mains courantes sur les véhicules.", "Vérifier l'état des marchepieds lors de l'entretien des véhicules (cf. stcs.fr)."),
+      nr("Vibrations", "Conducteur routier", "Conduite prolongée sur véhicule poids lourd.", "Sièges suspendus sur certains véhicules.", "Suivre l'ancienneté du parc et l'exposition vibratoire (cf. INRS ED 6018)."),
+      nr("Gestes répétitifs / TMS", "Manutentionnaire", "Chargement répété de colis sur quai.", "Rotation partielle des tâches.", "Sensibiliser aux gestes et postures de manutention (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Conducteur, agent d'exploitation", "Contraintes horaires et respect des délais de livraison.", "Planification des tournées par l'exploitation.", "Vous pouvez vous faire accompagner pour objectiver la charge liée aux délais (cf. INRS ED 6349)."),
+      nr("Ambiance thermique", "Conducteur, manutentionnaire", "Chargement en extérieur ou en quai non chauffé.", "Vêtements de travail adaptés fournis.", "Vérifier l'adéquation des EPI aux conditions climatiques (cf. stcs.fr)."),
+      nr("Circulation / engins", "Manutentionnaire", "Circulation de véhicules et engins de manutention sur le site.", "Zones de circulation délimitées au sol.", "Formaliser un plan de circulation site incluant piétons et engins (cf. INRS ED 941)."),
+    ],
+  },
+  informatique: {
+    postes: [
+      np("Développeur informatique", "Production", "Développement, tests et maintenance d'applications informatiques."),
+      np("Chef de projet", "Encadrement", "Pilotage de projets, coordination des équipes, relation client."),
+      np("Assistant administratif", "Support", "Gestion administrative, accueil, support aux équipes."),
+    ],
+    risques: [
+      nr("Travail sur écran", "Ensemble du personnel", "Poste de travail informatique utilisé de façon quasi continue.", "Écrans et mobilier de bureau standards.", "Vérifier l'ergonomie des postes (écran, siège, éclairage) (cf. INRS ED 924)."),
+      nr("Gestes répétitifs / TMS", "Développeur", "Utilisation prolongée du clavier et de la souris.", "Aucun aménagement ergonomique spécifique.", "Étudier l'aménagement ergonomique des postes (cf. INRS ED 924 et stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Charge de travail liée aux délais de projets.", "Points d'équipe réguliers.", "Vous pouvez vous faire accompagner pour objectiver la charge de travail (cf. INRS ED 6349)."),
+      nr("Éclairage", "Ensemble du personnel", "Travail sur écran en open space avec éclairage mixte.", "Éclairage général en place.", "Vérifier l'absence de reflets sur les écrans (cf. INRS ED 6008)."),
+      nr("Ambiance thermique", "Ensemble du personnel", "Salles serveurs ou open space avec climatisation.", "Climatisation en place.", "Vérifier le confort thermique en période estivale (cf. stcs.fr)."),
+      nr("Bruit", "Open space", "Ambiance sonore liée aux échanges en open space.", "Aucun aménagement acoustique particulier.", "Étudier des solutions d'atténuation acoustique en open space (cf. INRS ED 6035)."),
+      nr("Risque électrique", "Support technique", "Interventions ponctuelles sur matériel informatique et baies serveurs.", "Personnel formé aux interventions de premier niveau.", "Vérifier l'habilitation du personnel intervenant sur les baies électriques (cf. stcs.fr)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble du personnel", "Intervention de prestataires informatiques ou de maintenance.", "Accueil informel des intervenants.", "Formaliser les modalités d'accueil des entreprises extérieures (cf. INRS ED 941)."),
+    ],
+  },
+  coiffure: {
+    postes: [
+      np("Coiffeur", "Salon", "Réalisation des prestations de coiffure, conseil client."),
+      np("Apprenti coiffeur", "Salon", "Assistance aux prestations, shampoings, accueil."),
+      np("Responsable de salon", "Encadrement", "Gestion de l'équipe, des stocks et de la relation client."),
+    ],
+    risques: [
+      nr("Risque chimique", "Coiffeur", "Utilisation de produits de coloration, décoloration et permanente.", "Gants disponibles au poste technique.", "Vérifier le port systématique des gants et la disponibilité des FDS (cf. INRS ED 6008 et stcs.fr)."),
+      nr("Gestes répétitifs / TMS", "Coiffeur", "Gestes répétés en position debout, bras en élévation.", "Aucun aménagement ergonomique spécifique.", "Sensibiliser aux gestes et postures au poste technique (cf. stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols pouvant être glissants (cheveux, produits, eau).", "Nettoyage régulier du sol.", "Vérifier l'adéquation du revêtement de sol en zone technique (cf. INRS ED 950)."),
+      nr("Risques psychosociaux (RPS)", "Coiffeur, responsable de salon", "Relation client soutenue, objectifs commerciaux.", "Organisation en équipe.", "Vous pouvez vous faire accompagner pour objectiver la charge relationnelle (cf. stcs.fr)."),
+      nr("Risque biologique", "Coiffeur", "Contact avec le cuir chevelu et instruments de coupe.", "Désinfection du matériel entre chaque client.", "Vérifier les protocoles de désinfection du matériel (cf. stcs.fr)."),
+      nr("Éclairage", "Poste technique", "Précision requise pour les prestations de coupe et coloration.", "Éclairage dédié au poste technique.", "Vérifier l'absence d'éblouissement au poste technique (cf. INRS ED 6008)."),
+      nr("Bruit", "Salon", "Utilisation de sèche-cheveux et appareils techniques.", "Aucune mesure spécifique.", "Étudier l'ambiance sonore en période d'affluence (cf. INRS ED 6035)."),
+      nr("Risque électrique", "Coiffeur", "Utilisation d'appareils électriques à proximité de points d'eau.", "Prises et appareils aux normes.", "Vérifier la conformité électrique des postes techniques (cf. NF C15-100)."),
+    ],
+  },
+  nettoyage: {
+    postes: [
+      np("Agent de propreté", "Production", "Nettoyage des locaux, utilisation de matériel et produits d'entretien."),
+      np("Chef d'équipe nettoyage", "Encadrement", "Organisation des tournées, contrôle qualité, gestion des équipes."),
+    ],
+    risques: [
+      nr("Risque chimique", "Agent de propreté", "Utilisation quotidienne de produits d'entretien et de désinfection.", "Gants fournis, produits étiquetés.", "Vérifier la disponibilité des FDS sur chaque site d'intervention (cf. INRS ED 6008 et stcs.fr)."),
+      nr("Chutes de plain-pied", "Agent de propreté", "Sols mouillés pendant et après le nettoyage.", "Signalétique de sol glissant.", "Généraliser l'usage systématique de la signalétique de sécurité (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Agent de propreté", "Port de matériel et de bidons de produits entre sites.", "Chariots de ménage disponibles.", "Vérifier l'adéquation des chariots aux sites d'intervention (cf. INRS ED 6094)."),
+      nr("Gestes répétitifs / TMS", "Agent de propreté", "Gestes répétés de nettoyage (aspiration, lavage).", "Aucun aménagement ergonomique spécifique.", "Sensibiliser aux gestes et postures au poste (cf. stcs.fr)."),
+      nr("Risque électrique", "Agent de propreté", "Utilisation d'appareils électriques (aspirateurs, autolaveuses).", "Matériel vérifié périodiquement.", "Vérifier la traçabilité des contrôles du matériel électrique (cf. stcs.fr)."),
+      nr("Coactivité / entreprises extérieures", "Agent de propreté", "Intervention sur des sites clients en présence d'autres salariés.", "Consignes d'accueil variables selon les sites.", "Formaliser les modalités d'intervention en coactivité pour chaque site (cf. INRS ED 941)."),
+      nr("Risques psychosociaux (RPS)", "Agent de propreté", "Travail isolé fréquent, horaires décalés.", "Contact téléphonique avec l'encadrement.", "Vous pouvez vous faire accompagner pour objectiver le risque lié au travail isolé (cf. stcs.fr)."),
+      nr("Circulation / engins", "Agent de propreté", "Déplacements entre sites, parfois en horaires de faible visibilité.", "Véhicules de service entretenus.", "Rappeler les règles de sécurité routière liées aux déplacements professionnels (cf. stcs.fr)."),
+    ],
+  },
+  logistique: {
+    postes: [
+      np("Cariste", "Logistique", "Conduite de chariots élévateurs, stockage et déstockage."),
+      np("Préparateur de commandes", "Logistique", "Prélèvement et conditionnement des commandes clients."),
+      np("Agent de quai", "Logistique", "Réception et expédition des marchandises sur quai."),
+    ],
+    risques: [
+      nr("Chutes de hauteur", "Préparateur de commandes", "Prélèvement en rayonnage haut à l'aide d'un dispositif de préparation.", "Dispositifs de préparation avec garde-corps.", "Vérifier la conformité des dispositifs de préparation en hauteur (cf. INRS ED 6109)."),
+      nr("Manutention manuelle", "Préparateur de commandes, agent de quai", "Port de colis lors de la préparation et du chargement.", "Transpalettes manuels disponibles.", "Généraliser l'usage des aides à la manutention (cf. INRS ED 6094 et stcs.fr)."),
+      nr("Équipements de travail (machines)", "Cariste", "Conduite de chariots élévateurs en entrepôt.", "CACES à jour pour les caristes.", "Vérifier la validité des CACES et des visites périodiques des chariots (cf. INRS R489)."),
+      nr("Circulation / engins", "Ensemble du personnel", "Circulation croisée d'engins et de piétons en entrepôt.", "Zones de circulation marquées au sol.", "Renforcer la séparation physique des flux piétons/engins (cf. INRS ED 941)."),
+      nr("Gestes répétitifs / TMS", "Préparateur de commandes", "Gestes répétés de prélèvement et conditionnement.", "Rotation partielle des tâches.", "Étudier l'aménagement des postes de préparation (cf. stcs.fr)."),
+      nr("Bruit", "Entrepôt", "Ambiance sonore liée aux engins et convoyeurs.", "Aucune mesure spécifique.", "Étudier l'ambiance sonore en zone de préparation (cf. INRS ED 6035)."),
+      nr("Ambiance thermique", "Agent de quai", "Travail en zone de quai exposée aux variations climatiques.", "Vêtements adaptés fournis.", "Vérifier l'adéquation des EPI aux conditions climatiques du quai (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Préparateur de commandes", "Cadences liées aux objectifs de préparation.", "Suivi des cadences par l'encadrement.", "Vous pouvez vous faire accompagner pour objectiver la charge de travail liée aux cadences (cf. INRS ED 6349)."),
+    ],
+  },
+  agroalimentaire: {
+    postes: [
+      np("Boulanger-pâtissier", "Production", "Fabrication du pain et des viennoiseries, pétrissage, cuisson."),
+      np("Vendeur en boulangerie", "Vente", "Accueil client, vente, encaissement, mise en vitrine."),
+      np("Agent de production agroalimentaire", "Production", "Préparation, transformation et conditionnement des produits."),
+    ],
+    risques: [
+      nr("Risque électrique", "Boulanger, agent de production", "Fours et pétrins électriques utilisés quotidiennement.", "Matériel vérifié périodiquement.", "Vérifier la traçabilité des contrôles électriques du matériel de production (cf. stcs.fr)."),
+      nr("Ambiance thermique", "Boulanger", "Exposition à la chaleur des fours, écarts avec la chambre froide.", "Aération du fournil.", "Étudier l'amélioration de la ventilation du fournil (cf. INRS ED 950 et stcs.fr)."),
+      nr("Manutention manuelle", "Boulanger, agent de production", "Port de sacs de farine et de plaques de cuisson.", "Diable disponible en réserve.", "Étudier l'acquisition d'aides à la manutention pour les sacs de farine (cf. INRS ED 6094)."),
+      nr("Gestes répétitifs / TMS", "Boulanger", "Gestes répétés de pétrissage et façonnage.", "Rotation partielle des tâches.", "Sensibiliser aux gestes et postures au poste de façonnage (cf. stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols pouvant être rendus glissants par la farine ou l'eau.", "Nettoyage régulier du fournil.", "Vérifier l'adéquation du revêtement de sol en zone de production (cf. INRS ED 950)."),
+      nr("Équipements de travail (machines)", "Boulanger, agent de production", "Utilisation de pétrins, trancheuses, façonneuses.", "Protecteurs présents sur les machines.", "Vérifier la conformité des protecteurs des équipements tranchants (cf. INRS ED 6122)."),
+      nr("Risque biologique", "Agent de production", "Manipulation de denrées alimentaires périssables.", "Respect des règles d'hygiène HACCP.", "Vérifier la mise à jour du plan de maîtrise sanitaire (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Horaires très matinaux et cadence de production.", "Organisation en équipe.", "Vous pouvez vous faire accompagner pour objectiver la charge liée aux horaires atypiques (cf. INRS ED 6349)."),
+    ],
+  },
+  sante: {
+    postes: [
+      np("Praticien (médecin, dentiste)", "Soins", "Consultations, actes techniques, suivi des patients."),
+      np("Assistant(e) médical(e) / secrétaire", "Support", "Accueil des patients, prise de rendez-vous, gestion des dossiers."),
+      np("Personnel soignant / technicien", "Soins", "Actes de soins, prélèvements, assistance au praticien."),
+    ],
+    risques: [
+      nr("Risque biologique", "Praticien, personnel soignant", "Contact avec les patients, prélèvements, instruments souillés.", "Protocoles d'hygiène et gants à usage unique.", "Vérifier la mise à jour des protocoles d'hygiène et de gestion des DASRI (cf. stcs.fr)."),
+      nr("Risque chimique", "Personnel soignant", "Utilisation de produits désinfectants et, selon spécialité, de réactifs.", "FDS disponibles pour les principaux produits.", "Vérifier la disponibilité des FDS de l'ensemble des produits utilisés (cf. INRS ED 6008)."),
+      nr("Gestes répétitifs / TMS", "Praticien, personnel soignant", "Postures contraintes lors des actes de soins.", "Aucun aménagement ergonomique spécifique.", "Sensibiliser aux gestes et postures au poste de soins (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Charge émotionnelle liée à la relation avec les patients.", "Échanges réguliers au sein de l'équipe.", "Vous pouvez vous faire accompagner pour objectiver la charge psychologique du métier (cf. INRS ED 6349)."),
+      nr("Travail sur écran", "Praticien, secrétariat", "Utilisation du dossier patient informatisé.", "Postes informatiques récents.", "Veiller à l'ergonomie des postes de saisie (cf. INRS ED 924)."),
+      nr("Risque électrique", "Personnel soignant", "Utilisation d'équipements médicaux électriques.", "Maintenance biomédicale périodique.", "Vérifier la traçabilité de la maintenance des équipements médicaux (cf. stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols de cabinet ou de laboratoire pouvant être glissants.", "Nettoyage régulier des locaux.", "Maintenir le dégagement et le bon état des sols (cf. INRS ED 950)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble du personnel", "Intervention de prestataires de maintenance biomédicale ou informatique.", "Accueil informel des intervenants.", "Formaliser les modalités d'accueil des entreprises extérieures (cf. INRS ED 941)."),
+    ],
+  },
+  medico_social: {
+    postes: [
+      np("Auxiliaire de vie / aide à domicile", "Terrain", "Aide à la personne au domicile ou en établissement, actes de la vie quotidienne."),
+      np("Éducateur / animateur", "Accompagnement", "Accompagnement éducatif, activités, suivi des personnes accueillies."),
+      np("Personnel encadrant", "Encadrement", "Organisation des interventions, gestion des équipes."),
+    ],
+    risques: [
+      nr("Manutention manuelle", "Auxiliaire de vie", "Aide au transfert et à la mobilisation des personnes accompagnées.", "Formation ponctuelle aux gestes de transfert.", "Renforcer la formation aux gestes et postures de manutention de personnes (cf. INRS ED 6094 et stcs.fr)."),
+      nr("Gestes répétitifs / TMS", "Auxiliaire de vie, éducateur", "Postures contraintes lors des actes d'accompagnement.", "Aucun aménagement ergonomique spécifique.", "Sensibiliser aux gestes et postures adaptés à l'accompagnement (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Charge émotionnelle, isolement professionnel, horaires fractionnés.", "Échanges avec l'encadrement.", "Vous pouvez vous faire accompagner pour objectiver la charge liée au travail isolé (cf. INRS ED 6349)."),
+      nr("Risque routier", "Auxiliaire de vie", "Déplacements fréquents entre domiciles ou sites d'intervention.", "Véhicules personnels ou de service utilisés.", "Rappeler les règles de sécurité routière liées aux déplacements professionnels (cf. stcs.fr)."),
+      nr("Risque biologique", "Auxiliaire de vie, personnel soignant", "Contact avec les personnes accompagnées, actes d'hygiène.", "Gants à usage unique disponibles.", "Vérifier la disponibilité des équipements de protection individuelle (cf. stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols variables selon les lieux d'intervention (domicile, établissement).", "À préciser lors de la visite.", "Sensibiliser à la vigilance sur les lieux d'intervention variables (cf. INRS ED 950)."),
+      nr("Risque chimique", "Auxiliaire de vie", "Utilisation de produits d'entretien au domicile des personnes.", "À préciser lors de la visite.", "Rappeler les règles de manipulation des produits d'entretien (cf. INRS ED 6008)."),
+      nr("Coactivité / entreprises extérieures", "Auxiliaire de vie", "Intervention au domicile de tiers ou en présence d'autres intervenants.", "Coordination informelle entre intervenants.", "Formaliser la coordination entre les différents intervenants à domicile (cf. stcs.fr)."),
+    ],
+  },
+  enseignement: {
+    postes: [
+      np("Enseignant / formateur", "Pédagogie", "Préparation et animation des séances pédagogiques, suivi des apprenants."),
+      np("Personnel encadrant / directeur", "Encadrement", "Organisation de l'établissement, gestion de l'équipe pédagogique."),
+      np("Agent administratif", "Support", "Accueil, gestion administrative, vie scolaire."),
+    ],
+    risques: [
+      nr("Risques psychosociaux (RPS)", "Enseignant, formateur", "Gestion de groupe et charge mentale liée à l'activité pédagogique.", "Réunions d'équipe régulières.", "Vous pouvez vous faire accompagner pour objectiver la charge mentale du métier (cf. INRS ED 6349)."),
+      nr("Travail sur écran", "Enseignant, personnel administratif", "Préparation des cours et tâches administratives sur ordinateur.", "Postes informatiques disponibles.", "Veiller à l'ergonomie des postes de travail administratifs (cf. INRS ED 924)."),
+      nr("Bruit", "Enseignant", "Ambiance sonore en salle de classe et dans la cour.", "Aucune mesure spécifique.", "Étudier l'ambiance sonore dans les espaces les plus exposés (cf. INRS ED 6035)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Circulation dans les couloirs, cours et escaliers.", "Entretien régulier des locaux.", "Maintenir le dégagement des zones de circulation (cf. INRS ED 950)."),
+      nr("Éclairage", "Salles pédagogiques", "Niveau d'éclairement à vérifier selon les salles.", "Éclairage général en place.", "Vérifier l'adéquation de l'éclairage dans les salles pédagogiques (cf. INRS ED 6008)."),
+      nr("Risque électrique", "Personnel technique", "Utilisation d'équipements pédagogiques ou techniques.", "Matériel vérifié périodiquement.", "Vérifier la conformité électrique des équipements pédagogiques (cf. NF C15-100)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble du personnel", "Intervenants extérieurs, prestataires de maintenance ou d'animation.", "Accueil informel des intervenants.", "Formaliser les modalités d'accueil des intervenants extérieurs (cf. INRS ED 941)."),
+      nr("Risque routier", "Enseignant, formateur", "Sorties pédagogiques ou activité d'enseignement de la conduite.", "À préciser lors de la visite.", "Rappeler les consignes de sécurité lors des déplacements avec public (cf. stcs.fr)."),
+    ],
+  },
+  bureau_services: {
+    postes: [
+      np("Cadre / consultant", "Production", "Conseil, gestion de dossiers, relation client ou expertise métier."),
+      np("Assistant(e) administratif(ve)", "Support", "Gestion administrative, accueil, secrétariat."),
+      np("Responsable / dirigeant", "Encadrement", "Pilotage de l'activité, management de l'équipe."),
+    ],
+    risques: [
+      nr("Travail sur écran", "Ensemble du personnel", "Poste de travail informatique utilisé de façon quasi continue.", "Écrans et mobilier de bureau standards.", "Vérifier l'ergonomie des postes (écran, siège, éclairage) (cf. INRS ED 924)."),
+      nr("Gestes répétitifs / TMS", "Personnel administratif", "Utilisation prolongée du clavier et de la souris.", "Aucun aménagement ergonomique spécifique.", "Étudier l'aménagement ergonomique des postes (cf. INRS ED 924 et stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Charge de travail liée aux échéances et à la relation client.", "Points d'équipe réguliers.", "Vous pouvez vous faire accompagner pour objectiver la charge de travail (cf. INRS ED 6349)."),
+      nr("Éclairage", "Ensemble du personnel", "Travail sur écran en bureau avec éclairage mixte.", "Éclairage général en place.", "Vérifier l'absence de reflets sur les écrans (cf. INRS ED 6008)."),
+      nr("Ambiance thermique", "Ensemble du personnel", "Bureaux avec climatisation ou chauffage.", "Climatisation/chauffage en place.", "Vérifier le confort thermique selon les saisons (cf. stcs.fr)."),
+      nr("Bruit", "Open space", "Ambiance sonore liée aux échanges et appels téléphoniques.", "Aucun aménagement acoustique particulier.", "Étudier des solutions d'atténuation acoustique en open space (cf. INRS ED 6035)."),
+      nr("Risque électrique", "Support technique", "Installations électriques et équipements de bureau.", "Matériel vérifié périodiquement.", "Vérifier la conformité des installations électriques (cf. NF C15-100)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble du personnel", "Intervention de prestataires (informatique, entretien, maintenance).", "Accueil informel des intervenants.", "Formaliser les modalités d'accueil des entreprises extérieures (cf. INRS ED 941)."),
+    ],
+  },
+  sport_loisirs: {
+    postes: [
+      np("Animateur / éducateur sportif", "Encadrement", "Encadrement d'activités sportives ou de loisirs, sécurité du public."),
+      np("Agent d'entretien des installations", "Maintenance", "Entretien des équipements et locaux sportifs."),
+      np("Personnel d'accueil", "Accueil", "Accueil du public, inscriptions, surveillance des espaces communs."),
+    ],
+    risques: [
+      nr("Gestes répétitifs / TMS", "Animateur sportif", "Démonstrations et gestes techniques répétés.", "Rotation partielle des activités encadrées.", "Sensibiliser aux gestes et postures selon les activités encadrées (cf. stcs.fr)."),
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols pouvant être glissants (vestiaires, abords de piscine).", "Signalétique de sol glissant.", "Vérifier l'adéquation des revêtements de sol dans les zones humides (cf. INRS ED 950)."),
+      nr("Équipements de travail (machines)", "Agent d'entretien", "Utilisation de matériel d'entretien des installations et équipements sportifs.", "Formation interne à l'utilisation.", "Vérifier la conformité et l'entretien périodique des équipements (cf. INRS ED 6122)."),
+      nr("Risque chimique", "Agent d'entretien", "Produits d'entretien, éventuellement produits de traitement de l'eau.", "FDS disponibles pour les principaux produits.", "Vérifier la disponibilité des FDS des produits utilisés (cf. INRS ED 6008)."),
+      nr("Risques psychosociaux (RPS)", "Animateur, personnel d'accueil", "Encadrement de public, parfois nombreux ou difficile.", "Consignes de sécurité formalisées.", "Vous pouvez vous faire accompagner pour objectiver la charge liée à l'encadrement de public (cf. INRS ED 6349)."),
+      nr("Bruit", "Ensemble du personnel", "Ambiance sonore liée à l'activité et au public.", "Aucune mesure spécifique.", "Étudier l'ambiance sonore dans les espaces les plus fréquentés (cf. INRS ED 6035)."),
+      nr("Ambiance thermique", "Agent d'entretien, animateur", "Variations thermiques selon les espaces (piscine, extérieur).", "Vêtements adaptés fournis.", "Vérifier l'adéquation des tenues aux conditions de travail (cf. stcs.fr)."),
+      nr("Coactivité / entreprises extérieures", "Ensemble du personnel", "Intervention de prestataires ou d'associations utilisatrices des locaux.", "Accueil informel des intervenants.", "Formaliser les modalités d'accueil des structures utilisatrices (cf. INRS ED 941)."),
+    ],
+  },
+  default: {
+    postes: [
+      np("Opérateur / agent de production", "Production", "Activité principale de l'entreprise, à préciser lors de la visite."),
+      np("Encadrant / responsable", "Encadrement", "Organisation de l'activité, gestion de l'équipe."),
+      np("Personnel administratif", "Support", "Tâches administratives, accueil, gestion courante."),
+    ],
+    risques: [
+      nr("Chutes de plain-pied", "Ensemble du personnel", "Sols et zones de circulation à examiner lors de la visite.", "À préciser lors de la visite.", "Maintenir le dégagement des zones de circulation (cf. INRS ED 950)."),
+      nr("Manutention manuelle", "Ensemble du personnel", "Port de charges à préciser selon les postes observés.", "À préciser lors de la visite.", "Évaluer les besoins en aides à la manutention (cf. INRS ED 6094)."),
+      nr("Gestes répétitifs / TMS", "Ensemble du personnel", "Gestes répétitifs à préciser selon les postes observés.", "À préciser lors de la visite.", "Sensibiliser aux gestes et postures adaptés (cf. stcs.fr)."),
+      nr("Risques psychosociaux (RPS)", "Ensemble du personnel", "Organisation du travail à préciser lors de la visite.", "À préciser lors de la visite.", "Vous pouvez vous faire accompagner pour objectiver la charge de travail (cf. INRS ED 6349)."),
+      nr("Équipements de travail (machines)", "Personnel concerné", "Équipements utilisés à préciser lors de la visite.", "À préciser lors de la visite.", "Vérifier la conformité et les contrôles périodiques des équipements (cf. INRS ED 6122)."),
+      nr("Risque électrique", "Personnel concerné", "Installations électriques à préciser lors de la visite.", "À préciser lors de la visite.", "Vérifier la conformité des installations électriques (cf. NF C15-100)."),
+      nr("Incendie / explosion", "Ensemble du personnel", "Moyens de lutte contre l'incendie à vérifier lors de la visite.", "À préciser lors de la visite.", "Vérifier la conformité des moyens de lutte contre l'incendie (cf. stcs.fr)."),
+      nr("Circulation / engins", "Ensemble du personnel", "Flux de circulation à préciser lors de la visite.", "À préciser lors de la visite.", "Formaliser un plan de circulation si nécessaire (cf. INRS ED 941)."),
+    ],
+  },
+};
+
+const NAF_EXACT_MAP = {
+  "25.61Z": "metallurgie",
+  "43.99C": "construction",
+  "45.11Z": "auto",
+  "45.20A": "auto",
+  "47.71Z": "commerce_detail",
+  "47.73Z": "sante",
+  "56.10A": "restauration",
+  "49.41A": "transport",
+  "62.01Z": "informatique",
+  "96.02A": "coiffure",
+  "81.21Z": "nettoyage",
+  "52.10B": "logistique",
+  "10.71C": "agroalimentaire",
+  "43.21A": "construction",
+  "43.22A": "construction",
+  "86.23Z": "sante",
+  "88.10A": "medico_social",
+  "85.20Z": "enseignement",
+  "93.12Z": "sport_loisirs",
+};
+
+// Mapping par division NAF (2 premiers chiffres) — couvre l'ensemble du portefeuille STCS.
+// Choix par défaut au niveau division ; l'exact-match ci-dessus prime toujours quand disponible.
+const NAF_PREFIX_MAP = {
+  "01": "default", "02": "default", "03": "default",
+  "05": "construction", "06": "construction", "07": "construction", "08": "construction", "09": "construction",
+  "10": "agroalimentaire", "11": "agroalimentaire", "12": "agroalimentaire",
+  "13": "metallurgie", "14": "metallurgie", "15": "metallurgie", "16": "metallurgie", "17": "metallurgie",
+  "18": "metallurgie", "19": "metallurgie", "20": "metallurgie", "21": "metallurgie", "22": "metallurgie",
+  "23": "metallurgie", "24": "metallurgie", "25": "metallurgie", "26": "metallurgie", "27": "metallurgie",
+  "28": "metallurgie", "29": "metallurgie", "30": "metallurgie", "31": "metallurgie", "32": "metallurgie", "33": "metallurgie",
+  "35": "metallurgie", "36": "nettoyage", "37": "nettoyage", "38": "nettoyage", "39": "nettoyage",
+  "41": "construction", "42": "construction", "43": "construction",
+  "45": "auto",
+  "46": "logistique",
+  "47": "commerce_detail",
+  "49": "transport", "50": "transport", "51": "transport", "53": "transport",
+  "52": "logistique",
+  "55": "restauration", "56": "restauration",
+  "58": "informatique", "59": "informatique", "60": "informatique", "61": "informatique", "62": "informatique", "63": "informatique",
+  "64": "bureau_services", "65": "bureau_services", "66": "bureau_services",
+  "68": "bureau_services",
+  "69": "bureau_services", "70": "bureau_services", "71": "bureau_services", "72": "bureau_services",
+  "73": "bureau_services", "74": "bureau_services",
+  "75": "sante",
+  "77": "logistique",
+  "78": "bureau_services", "79": "bureau_services",
+  "80": "default",
+  "81": "nettoyage",
+  "82": "bureau_services",
+  "84": "bureau_services",
+  "85": "enseignement",
+  "86": "sante",
+  "87": "medico_social", "88": "medico_social",
+  "90": "sport_loisirs", "91": "sport_loisirs", "93": "sport_loisirs",
+  "94": "bureau_services",
+  "95": "auto",
+  "96": "coiffure",
+};
+
+function resolveNafProfileKey(rawCode) {
+  const code = (rawCode || "").trim().toUpperCase();
+  if (!code) return null;
+  if (NAF_EXACT_MAP[code]) return NAF_EXACT_MAP[code];
+  const prefix = code.slice(0, 2);
+  if (NAF_PREFIX_MAP[prefix]) return NAF_PREFIX_MAP[prefix];
+  return "default";
+}
+
+function freshPoste() { return { intitule: "", groupe: "", taches: "", nb: "" }; }
+function freshRisque() { return { risque: "", postes: "", elements: "", moyens: "", conseils: "" }; }
+
+function defaultState() {
+  return {
+    g_codeNAF: "", g_libelle: "", g_numAdherent: "",
+    _prefilledFor: "",
+    g_medecin: "", g_infirmiere: "", g_assistantMed: "", g_centreVisite: "",
+    g_visiteRealisee: "", g_dateVisite: "", g_interlocuteurs: "", g_lieuxVisites: "",
+    g_enActivite: "", g_photos: "", g_commentairesVisite: "",
+    g_descriptif: "",
+    preco1: "", preco2: "", preco3: "",
+
+    s1_adresse: "", s1_telephone: "", s1_conventionCollective: "", s1_dateAdhesion: "",
+    s1_cpNom: "", s1_cpTel: "", s1_cpMail: "",
+    s1_acNom: "", s1_acTel: "", s1_acMail: "",
+    s1_commentaires: "",
+
+    s2_cse_on: "", s2_cse_prec: "",
+    s2_cssct_on: "", s2_cssct_prec: "",
+    s2_ri_on: "", s2_ri_prec: "",
+    s2_duerp_on: "", s2_duerp_prec: "",
+    s2_sal_on: "", s2_sal_prec: "",
+    s2_affichage_on: "", s2_affichage_prec: "",
+    s2_nomSalarie: "",
+    s2_commentaires: "",
+
+    s3_cdi_f: "", s3_cdi_h: "", s3_cdd_f: "", s3_cdd_h: "",
+    s3_interim_f: "", s3_interim_h: "", s3_apprenti_f: "", s3_apprenti_h: "",
+    s3_tempsPartiel: "", s3_travHandicape: "", s3_dontNombre: "",
+    s3_commentaires: "",
+
+    s4_registre: "",
+    s4_atSans: "", s4_atAvec: "", s4_maladiesPro: "", s4_maladiesCar: "",
+    s4_commentaires: "",
+
+    s5_alarme: "", s5_extincteurs: "", s5_planEvac: "",
+    s5_consignes: "", s5_trousse: "", s5_infirmerieOui: "", s5_defib: "",
+    s5_sstNb: "", s5_pompiersNb: "", s5_amplitudes: "",
+    s5_commentaires: "",
+
+    s6_normal_nb: "", s6_normal_rythme: "",
+    s6_equipes_nb: "", s6_equipes_rythme: "",
+    s6_coupes_nb: "", s6_coupes_rythme: "",
+    s6_nuit_nb: "", s6_nuit_rythme: "",
+    s6_weekend_nb: "", s6_weekend_rythme: "",
+    s6_atypiques_nb: "", s6_atypiques_rythme: "",
+    s6_astreinte_nb: "", s6_astreinte_rythme: "",
+    s6_tempsHebdo: "",
+    s6_commentaires: "",
+
+    s7_nettoyagePar: "", s7_periodiciteNettoyage: "", s7_postesNettoyage: "",
+    s7_listeVetements: "", s7_fournisPar: "", s7_realiseVet: "", s7_periodiciteVet: "",
+    s7_localRestauration: "", s7_toilettes: "",
+    s7_commentaires: "",
+
+    s8_fichesEcrites: "",
+    postes: [freshPoste()],
+    s8_commentaires: "",
+
+    s9_description: "",
+    s9_commentaires: "",
+
+    s10_vestiaires_disp: "", s10_vestiaires_sep: "",
+    s10_douche_disp: "", s10_douche_sep: "",
+    s10_lavabos_disp: "", s10_lavabos_sep: "",
+    s10_essuie_disp: "", s10_essuie_sep: "",
+    s10_toilettes_disp: "", s10_toilettes_sep: "",
+    s10_armoires_disp: "", s10_armoires_sep: "",
+    s10_eau_disp: "", s10_eau_sep: "",
+    s10_pause_disp: "", s10_pause_sep: "",
+    s10_handicapes_disp: "", s10_handicapes_sep: "",
+    s10_commentaires: "",
+
+    s11_listeProduits: "", s11_fdsCommuniquees: "", s11_fdsDisposition: "",
+    s11_commentaires: "",
+    risques: [freshRisque()],
+
+    s12_commentaires: "",
+    s13_documents: "",
+    s14_historique: "",
+  };
+}
+
+// ================== ÉTAT ==================
+const STORAGE_KEY = "stcs_fe_questionnaire_v1";
+let state = loadState();
+let currentPanel = 0;
+let mode = "form"; // 'form' | 'preview'
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const fresh = defaultState();
+      return Object.assign(fresh, parsed);
+    }
+  } catch (e) { /* ignore, fallback below */ }
+  return defaultState();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+}
+
+// ================== RECONNAISSANCE VOCALE (WEB SPEECH API) ==================
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SPEECH_SUPPORTED = !!SpeechRecognition;
+
+let currentRecognition = null;
+
+function startSpeechRecognition(bindKey, fieldLabel) {
+  if (!SPEECH_SUPPORTED) {
+    alert("La reconnaissance vocale n'est pas supportée par votre navigateur. Utilisez Chrome, Edge ou Safari.");
+    return;
+  }
+
+  const btn = document.querySelector(`[data-audio="${cssEsc(bindKey)}"]`);
+  if (!btn) return;
+
+  if (currentRecognition) {
+    currentRecognition.abort();
+    currentRecognition = null;
+    btn.classList.remove("recording");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "fr-FR";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  btn.classList.add("recording");
+  const hint = btn.nextElementSibling;
+  if (hint && hint.classList.contains("audio-hint")) {
+    hint.textContent = "🎤 Écoute en cours... parlez maintenant (français)";
+  }
+
+  recognition.onstart = () => {
+    btn.classList.add("recording");
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    if (event.results[event.results.length - 1].isFinal) {
+      const field = document.querySelector(`[data-bind="${cssEsc(bindKey)}"]`);
+      if (field) {
+        const currentVal = field.value || "";
+        const newVal = (currentVal ? currentVal + " " : "") + transcript.trim();
+        field.value = newVal;
+        setPath(state, bindKey, newVal);
+        saveState();
+        updateProgress();
+        if (field.getAttribute("data-wc")) updateCounter(field);
+      }
+      if (hint && hint.classList.contains("audio-hint")) {
+        hint.textContent = "✅ Dictée OK — cliquez 🎤 pour ajouter plus";
+      }
+      btn.classList.remove("recording");
+      currentRecognition = null;
+    }
+  };
+
+  recognition.onerror = (event) => {
+    const errorMessages = {
+      "network": "Erreur réseau — vérifiez votre connexion",
+      "not-allowed": "Microphone refusé — vérifiez les permissions",
+      "no-speech": "Pas de parole détectée — parlez plus fort",
+    };
+    const msg = errorMessages[event.error] || `Erreur: ${event.error}`;
+    if (hint && hint.classList.contains("audio-hint")) {
+      hint.textContent = `❌ ${msg}`;
+    }
+    btn.classList.remove("recording");
+    btn.classList.add("error");
+    setTimeout(() => btn.classList.remove("error"), 2000);
+    currentRecognition = null;
+  };
+
+  recognition.onend = () => {
+    btn.classList.remove("recording");
+    currentRecognition = null;
+  };
+
+  currentRecognition = recognition;
+  recognition.start();
+}
+
+// ================== UTILITAIRES ==================
+function esc(s) {
+  return (s === undefined || s === null ? "" : String(s))
+    .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function dispVal(v) {
+  const s = (v === undefined || v === null) ? "" : String(v).trim();
+  return s === "" ? "/" : esc(s);
+}
+function wordCount(s) {
+  s = (s || "").trim();
+  if (!s) return 0;
+  return s.split(/\s+/).filter(Boolean).length;
+}
+function getPath(obj, path) {
+  const parts = path.split(".");
+  let cur = obj;
+  for (const p of parts) {
+    if (cur === undefined || cur === null) return undefined;
+    cur = cur[/^\d+$/.test(p) ? parseInt(p, 10) : p];
+  }
+  return cur;
+}
+function setPath(obj, path, val) {
+  const parts = path.split(".");
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const p = /^\d+$/.test(parts[i]) ? parseInt(parts[i], 10) : parts[i];
+    if (cur[p] === undefined) cur[p] = /^\d+$/.test(parts[i + 1]) ? [] : {};
+    cur = cur[p];
+  }
+  const last = parts[parts.length - 1];
+  cur[/^\d+$/.test(last) ? parseInt(last, 10) : last] = val;
+}
+
+// ================== BUILDERS DE CHAMPS ==================
+function fld(bindKey, label, opts = {}) {
+  const val = getPath(state, bindKey);
+  const type = opts.type || "text";
+  const sub = opts.sub ? `<span class="sub"> — ${esc(opts.sub)}</span>` : "";
+  const audio = opts.audio ? true : false;
+  const fieldHtml = `<input type="${type}" data-bind="${bindKey}" value="${esc(val)}" placeholder="${esc(opts.placeholder || "")}">`;
+  const audioHtml = audio ? `<button type="button" class="audio-btn" data-audio="${bindKey}" title="Dicter (micros)" onclick="startSpeechRecognition('${bindKey}', '${esc(label)}')" ${!SPEECH_SUPPORTED ? 'disabled' : ''}>🎤</button>` : '';
+  const hintHtml = audio ? '<div class="audio-hint"></div>' : '';
+  
+  if (audio) {
+    return `<div class="field-with-audio">
+      <div class="field">
+        <label>${esc(label)}${sub}</label>
+        ${fieldHtml}
+        ${hintHtml}
+      </div>
+      ${audioHtml}
+    </div>`;
+  }
+  return `<div class="field">
+    <label>${esc(label)}${sub}</label>
+    ${fieldHtml}
+  </div>`;
+}
+
+function txt(bindKey, label, opts = {}) {
+  const val = getPath(state, bindKey);
+  const wc = opts.wordLimit ? `data-wc="wc-${bindKey}" data-wcmin="${opts.wordLimit[0]}" data-wcmax="${opts.wordLimit[1]}"` : "";
+  const counter = opts.wordLimit ? `<div class="counter" id="wc-${bindKey}">0 mots</div>` : "";
+  const sub = opts.sub ? `<span class="sub"> — ${esc(opts.sub)}</span>` : "";
+  const audio = opts.audio ? true : false;
+  const textareaHtml = `<textarea data-bind="${bindKey}" ${wc} rows="${opts.rows || 3}" placeholder="${esc(opts.placeholder || "")}">${esc(val)}</textarea>`;
+  const audioHtml = audio ? `<button type="button" class="audio-btn" data-audio="${bindKey}" title="Dicter (micros)" onclick="startSpeechRecognition('${bindKey}', '${esc(label)}')" ${!SPEECH_SUPPORTED ? 'disabled' : ''}>🎤</button>` : '';
+  const hintHtml = audio ? '<div class="audio-hint"></div>' : '';
+
+  if (audio) {
+    return `<div class="field-with-audio">
+      <div class="field" style="flex:1;">
+        <label>${esc(label)}${sub}</label>
+        ${textareaHtml}
+        ${counter}
+        ${hintHtml}
+      </div>
+      ${audioHtml}
+    </div>`;
+  }
+  return `<div class="field">
+    <label>${esc(label)}${sub}</label>
+    ${textareaHtml}
+    ${counter}
+  </div>`;
+}
+
+function sel(bindKey, label, options = OUI_NON_OPTIONS) {
+  const val = getPath(state, bindKey) || "";
+  const opts = options.map(o => `<option value="${esc(o)}" ${o === val ? "selected" : ""}>${o === "" ? "—" : esc(o)}</option>`).join("");
+  return `<select data-bind="${bindKey}">${opts}</select>`;
+}
+
+function selField(bindKey, label, options = OUI_NON_OPTIONS) {
+  return `<div class="field"><label>${esc(label)}</label>${sel(bindKey, label, options)}</div>`;
+}
+
+function miniInput(bindKey, type = "text") {
+  const val = getPath(state, bindKey);
+  return `<input type="${type}" data-bind="${bindKey}" value="${esc(val)}">`;
+}
+
+// ================== PANELS — FORMULAIRE ==================
+function panelGarde() {
+  const profileKey = resolveNafProfileKey(state.g_codeNAF);
+  const profileLabels = {
+    metallurgie: "industrie / métallurgie / production", construction: "construction / BTP / travaux publics", auto: "commerce et réparation automobile",
+    commerce_detail: "commerce de détail", restauration: "restauration / hébergement", transport: "transport routier",
+    informatique: "informatique / numérique", coiffure: "coiffure / soins / services à la personne", nettoyage: "nettoyage / gestion des déchets",
+    logistique: "commerce de gros / entreposage / logistique", agroalimentaire: "boulangerie / agroalimentaire",
+    sante: "santé / professions médicales", medico_social: "aide à la personne / médico-social",
+    enseignement: "enseignement / formation", bureau_services: "bureau / conseil / services aux entreprises",
+    sport_loisirs: "sport / loisirs / culture", default: "profil générique (aucune correspondance NAF précise)",
+  };
+  const nafStatus = state.g_codeNAF.trim()
+    ? `<div class="naf-status">💡 Profil détecté : <b>${esc(profileLabels[profileKey] || profileKey)}</b>. Les rubriques 8 (postes) et 11 (risques) peuvent être préremplies avec des suggestions à vérifier sur site.
+        <button type="button" class="navbtn primary" style="margin-top:8px;padding:7px 14px;font-size:12px;" onclick="prefillFromNAF(false)">🔄 Préremplir postes &amp; risques maintenant</button>
+      </div>`
+    : `<div class="naf-status muted">Renseignez le code NAF pour activer le préremplissage automatique des rubriques 8 et 11.</div>`;
+  return `
+  <div class="card">
+    <h2>Identification</h2>
+    <p class="hint">Ces informations figurent en page de garde de la FE.</p>
+    <div class="grid g3">
+      ${fld("g_codeNAF", "Code NAF", { placeholder: "ex. 25.61Z" })}
+      ${fld("g_libelle", "Libellé de l'activité", { placeholder: "ex. Traitement et revêtement des métaux" })}
+      ${fld("g_numAdherent", "N° Adhérent")}
+    </div>
+    ${nafStatus}
+    <div class="subgrid-title">Équipe pluridisciplinaire</div>
+    <div class="grid g3">
+      ${fld("g_medecin", "Médecin du travail", { audio: true })}
+      ${fld("g_infirmiere", "Infirmière", { audio: true })}
+      ${fld("g_assistantMed", "Assistant médical", { audio: true })}
+    </div>
+    <div class="grid g1">${fld("g_centreVisite", "Centre de visite médicale")}</div>
+  </div>
+
+  <div class="card">
+    <h2>Visite(s) de l'entreprise</h2>
+    <div class="grid">
+      ${fld("g_visiteRealisee", "Réalisée(s) par")}
+      ${fld("g_dateVisite", "Date(s) de la/des visite(s)", { type: "date" })}
+      ${fld("g_interlocuteurs", "Interlocuteur(s) pour la/les visites")}
+      ${fld("g_lieuxVisites", "Lieux visités")}
+      ${fld("g_enActivite", "En activité (pendant la visite)")}
+      ${fld("g_photos", "Photos")}
+    </div>
+    <div class="grid g1">${txt("g_commentairesVisite", "Commentaires", { rows: 2 })}</div>
+  </div>
+
+  <div class="card">
+    <h2>Descriptif de l'activité et des projets de l'entreprise</h2>
+    <p class="hint">Présentation courte et strictement factuelle de l'activité — 40 à 50 mots. 💡 Cliquez 🎤 pour dicter.</p>
+    <div class="grid g1">${txt("g_descriptif", "Descriptif", { rows: 4, wordLimit: [40, 50], audio: true })}</div>
+  </div>
+
+  <div class="card">
+    <h2>Préconisations prioritaires d'actions de prévention primaire</h2>
+    <p class="hint">3 préconisations, 30 à 40 mots chacune, ton bienveillant et constructif. Elles apparaissent en page 1 et en conclusion (§12). 💡 Cliquez 🎤 pour dicter.</p>
+    ${txt("preco1", "Préconisation 1", { rows: 3, wordLimit: [30, 40], audio: true })}
+    ${txt("preco2", "Préconisation 2", { rows: 3, wordLimit: [30, 40], audio: true })}
+    ${txt("preco3", "Préconisation 3", { rows: 3, wordLimit: [30, 40], audio: true })}
+  </div>`;
+}
+
+function panelS1() {
+  return `
+  <div class="card">
+    <h2>1. Renseignements administratifs</h2>
+    <div class="grid">
+      ${fld("s1_adresse", "Adresse", { audio: true })}
+      ${fld("s1_telephone", "Téléphone", { audio: true })}
+      ${fld("s1_conventionCollective", "Convention collective", { audio: true })}
+      ${fld("s1_dateAdhesion", "Date d'adhésion STCS", { type: "date" })}
+    </div>
+    <div class="subgrid-title">Contact principal</div>
+    <div class="grid g3">
+      ${fld("s1_cpNom", "Nom Prénom Fonction", { audio: true })}
+      ${fld("s1_cpTel", "Téléphone", { audio: true })}
+      ${fld("s1_cpMail", "Courriel", { audio: true })}
+    </div>
+    <div class="subgrid-title">Autre correspondant</div>
+    <div class="grid g3">
+      ${fld("s1_acNom", "Nom Prénom Fonction", { audio: true })}
+      ${fld("s1_acTel", "Téléphone", { audio: true })}
+      ${fld("s1_acMail", "Courriel", { audio: true })}
+    </div>
+    <div class="grid g1">${txt("s1_commentaires", "Commentaires", { rows: 2, audio: true })}</div>
+  </div>`;
+}
+
+function fonctRow(label, onKey, precKey, precLabel) {
+  return `<tr>
+    <td class="label">${esc(label)}</td>
+    <td>${sel(onKey, label, OUI_NON_OPTIONS)}</td>
+    <td>${miniInput(precKey)}</td>
+  </tr>`;
+}
+
+function panelS2() {
+  return `
+  <div class="card">
+    <h2>2. Fonctionnement de l'entreprise</h2>
+    <table class="mtable">
+      <tr><th style="width:46%">Instance / obligation</th><th style="width:18%">Oui / Non</th><th>Précision / date de mise à jour</th></tr>
+      ${fonctRow("CSE (≥ 11 salariés)", "s2_cse_on", "s2_cse_prec")}
+      ${fonctRow("CSSCT (≥ 300 salariés)", "s2_cssct_on", "s2_cssct_prec")}
+      ${fonctRow("Règlement intérieur (≥ 50 salariés)", "s2_ri_on", "s2_ri_prec")}
+      ${fonctRow("Document unique d'évaluation des risques (DUERP)", "s2_duerp_on", "s2_duerp_prec")}
+      ${fonctRow("Salarié désigné compétent SST", "s2_sal_on", "s2_sal_prec")}
+      ${fonctRow("Affichage obligatoire", "s2_affichage_on", "s2_affichage_prec")}
+    </table>
+    <div class="grid g1" style="margin-top:10px;">
+      ${fld("s2_nomSalarie", "Nom du salarié désigné compétent", { sub: "sera anonymisé (initiales) dans la FE" })}
+    </div>
+    <div class="grid g1">${txt("s2_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS3() {
+  return `
+  <div class="card">
+    <h2>3. Effectifs</h2>
+    <table class="mtable" id="effectifTable">
+      <tr><th style="width:34%"></th><th>Femmes</th><th>Hommes</th><th>Total</th></tr>
+      <tr><td class="label">CDI</td><td>${miniInput("s3_cdi_f", "number")}</td><td>${miniInput("s3_cdi_h", "number")}</td><td class="total-cell" data-tot="cdi">0</td></tr>
+      <tr><td class="label">CDD</td><td>${miniInput("s3_cdd_f", "number")}</td><td>${miniInput("s3_cdd_h", "number")}</td><td class="total-cell" data-tot="cdd">0</td></tr>
+      <tr><td class="label">Intérimaire</td><td>${miniInput("s3_interim_f", "number")}</td><td>${miniInput("s3_interim_h", "number")}</td><td class="total-cell" data-tot="interim">0</td></tr>
+      <tr><td class="label">Apprenti</td><td>${miniInput("s3_apprenti_f", "number")}</td><td>${miniInput("s3_apprenti_h", "number")}</td><td class="total-cell" data-tot="apprenti">0</td></tr>
+      <tr><td class="label">Total</td><td class="total-cell" data-tot="f">0</td><td class="total-cell" data-tot="h">0</td><td class="total-cell" data-tot="grand">0</td></tr>
+    </table>
+    <div class="grid g3" style="margin-top:12px;">
+      ${fld("s3_tempsPartiel", "Temps partiel (nombre)", { type: "number" })}
+      ${fld("s3_travHandicape", "Travailleur handicapé (nombre)", { type: "number" })}
+      ${fld("s3_dontNombre", "Dont nombre de salariés (précision)")}
+    </div>
+    <div class="grid g1">${txt("s3_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS4() {
+  return `
+  <div class="card">
+    <h2>4. Sinistralité</h2>
+    <div class="grid g1">${fld("s4_registre", "Registre des accidents bénins")}</div>
+    <div class="subgrid-title">Sur les 12 derniers mois — nombre</div>
+    <div class="grid g3">
+      ${fld("s4_atSans", "Accidents du travail sans arrêt", { type: "number" })}
+      ${fld("s4_atAvec", "Accidents du travail avec arrêt", { type: "number" })}
+      ${fld("s4_maladiesPro", "Maladies professionnelles", { type: "number" })}
+    </div>
+    <div class="grid">${fld("s4_maladiesCar", "Maladies à caractère professionnel", { type: "number" })}</div>
+    <div class="grid g1">${txt("s4_commentaires", "Commentaires / type - origine", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS5() {
+  return `
+  <div class="card">
+    <h2>5. Organisation des secours</h2>
+    <div class="subgrid-title">En cas d'incendie</div>
+    <div class="grid g3">
+      ${selField("s5_alarme", "Alarme sonore")}
+      ${selField("s5_extincteurs", "Extincteurs / moyens d'extinction")}
+      ${selField("s5_planEvac", "Plan d'évacuation et consignes")}
+    </div>
+    <div class="subgrid-title">En cas d'accident</div>
+    <div class="grid g3">
+      ${selField("s5_consignes", "Consignes conduite à tenir")}
+      ${selField("s5_trousse", "Trousse de premiers secours")}
+      ${selField("s5_infirmerieOui", "Infirmerie")}
+      ${selField("s5_defib", "Défibrillateur")}
+      ${fld("s5_sstNb", "Sauveteurs secouristes du travail (SST) — nombre", { type: "number" })}
+      ${fld("s5_pompiersNb", "Pompiers volontaires — nombre", { type: "number" })}
+    </div>
+    <div class="grid g1">${selField("s5_amplitudes", "Présence sur toutes les amplitudes horaires")}</div>
+    <div class="grid g1">${txt("s5_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function horaireRow(label, nbKey, rythmeKey) {
+  return `<tr>
+    <td class="label">${esc(label)}</td>
+    <td>${miniInput(nbKey, "number")}</td>
+    <td>${miniInput(rythmeKey)}</td>
+  </tr>`;
+}
+
+function panelS6() {
+  return `
+  <div class="card">
+    <h2>6. Organisation du travail et horaires</h2>
+    <table class="mtable">
+      <tr><th style="width:46%">Horaires</th><th style="width:18%">Nb salariés</th><th>Horaires, rythme</th></tr>
+      ${horaireRow("Normal (jour)", "s6_normal_nb", "s6_normal_rythme")}
+      ${horaireRow("Équipes successives (2x8, 3x8…)", "s6_equipes_nb", "s6_equipes_rythme")}
+      ${horaireRow("Horaires coupés (≥ 3h)", "s6_coupes_nb", "s6_coupes_rythme")}
+      ${horaireRow("De nuit", "s6_nuit_nb", "s6_nuit_rythme")}
+      ${horaireRow("Week-end", "s6_weekend_nb", "s6_weekend_rythme")}
+      ${horaireRow("Horaires atypiques", "s6_atypiques_nb", "s6_atypiques_rythme")}
+      ${horaireRow("Astreinte", "s6_astreinte_nb", "s6_astreinte_rythme")}
+    </table>
+    <div class="grid g1" style="margin-top:10px;">${fld("s6_tempsHebdo", "Temps de travail hebdomadaire")}</div>
+    <div class="grid g1">${txt("s6_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS7() {
+  return `
+  <div class="card">
+    <h2>7. Entretien</h2>
+    <div class="subgrid-title">Locaux</div>
+    <div class="grid g3">
+      ${fld("s7_nettoyagePar", "Nettoyage assuré par")}
+      ${fld("s7_periodiciteNettoyage", "Périodicité")}
+      ${fld("s7_postesNettoyage", "Postes concernés")}
+    </div>
+    <div class="subgrid-title">Vêtements de travail</div>
+    <div class="grid g3">
+      ${fld("s7_listeVetements", "Liste des vêtements")}
+      ${fld("s7_fournisPar", "Fournis par l'entreprise")}
+      ${selField("s7_realiseVet", "Entretien réalisé")}
+      ${fld("s7_periodiciteVet", "Périodicité")}
+    </div>
+    <div class="subgrid-title">Autres locaux</div>
+    <div class="grid">
+      ${selField("s7_localRestauration", "Local de restauration / emplacement pour se restaurer")}
+      ${selField("s7_toilettes", "Toilettes")}
+    </div>
+    <div class="grid g1">${txt("s7_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS8() {
+  const rows = state.postes.map((p, i) => `
+    <div class="dyn-row">
+      <span class="row-num">Poste ${i + 1}</span>
+      ${p._source === "naf" ? `<span class="naf-badge" id="naf-badge-postes-${i}">💡 suggestion — à vérifier</span>` : ""}
+      ${state.postes.length > 1 ? `<button type="button" class="remove-row" onclick="removePoste(${i})">Supprimer</button>` : ""}
+      <div class="grid g3" style="margin-top:6px;">
+        ${fld(`postes.${i}.intitule`, "Intitulé du poste", { placeholder: "en une dizaine de mots max", audio: true })}
+        ${fld(`postes.${i}.groupe`, "Groupe", { audio: true })}
+        ${fld(`postes.${i}.nb`, "Nombre de salariés", { type: "number" })}
+      </div>
+      <div class="grid g1">${txt(`postes.${i}.taches`, "Tâches", { rows: 3, audio: true })}</div>
+    </div>`).join("");
+
+  return `
+  <div class="card">
+    <h2>8. Postes de travail</h2>
+    <div class="grid g1">${selField("s8_fichesEcrites", "Fiches de postes écrites")}</div>
+  </div>
+  <div class="card">
+    <h2>Postes de travail et groupes de postes</h2>
+    <p class="hint">💡 Le préremplissage depuis le code NAF (page de garde) propose des postes types à adapter. Les lignes ajoutées sont repérées par un badge « suggestion » — il disparaît dès que vous modifiez la ligne.</p>
+    ${rows}
+    <button type="button" class="add-row-btn" onclick="addPoste()">+ Ajouter un poste</button>
+    <button type="button" class="add-row-btn" style="margin-top:8px;" onclick="prefillFromNAF(false)">🔄 Préremplir / compléter depuis le code NAF${state.g_codeNAF ? " (" + esc(state.g_codeNAF) + ")" : ""}</button>
+    <div class="grid g1" style="margin-top:14px;">${txt("s8_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS9() {
+  return `
+  <div class="card">
+    <h2>9. Ambiance générale</h2>
+    <div class="grid g1">${txt("s9_description", "Description générale", { rows: 4, audio: true })}</div>
+    <div class="grid g1">${txt("s9_commentaires", "Commentaires", { rows: 2, audio: true })}</div>
+  </div>`;
+}
+
+function locauxRow(label, dispKey, sepKey) {
+  return `<tr>
+    <td class="label">${esc(label)}</td>
+    <td>${sel(dispKey, label, OUI_NON_OPTIONS)}</td>
+    <td>${sel(sepKey, label, OUI_NON_OPTIONS)}</td>
+  </tr>`;
+}
+
+function panelS10() {
+  return `
+  <div class="card">
+    <h2>10. Locaux sociaux</h2>
+    <table class="mtable">
+      <tr><th style="width:46%"></th><th>Disponible</th><th>Séparation F / H</th></tr>
+      ${locauxRow("Vestiaires", "s10_vestiaires_disp", "s10_vestiaires_sep")}
+      ${locauxRow("Douche", "s10_douche_disp", "s10_douche_sep")}
+      ${locauxRow("Lavabos", "s10_lavabos_disp", "s10_lavabos_sep")}
+      ${locauxRow("Essuie-mains", "s10_essuie_disp", "s10_essuie_sep")}
+      ${locauxRow("Toilettes", "s10_toilettes_disp", "s10_toilettes_sep")}
+      ${locauxRow("Armoires individuelles", "s10_armoires_disp", "s10_armoires_sep")}
+      ${locauxRow("Distributeur d'eau", "s10_eau_disp", "s10_eau_sep")}
+      ${locauxRow("Pause déjeuner", "s10_pause_disp", "s10_pause_sep")}
+      ${locauxRow("Handicapés", "s10_handicapes_disp", "s10_handicapes_sep")}
+    </table>
+    <div class="grid g1" style="margin-top:10px;">${txt("s10_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS11() {
+  const chips = RISK_LIST.map(r => `<button type="button" class="risk-chip" onclick="addRisqueFromChip('${r.replace(/'/g, "\\'")}')">+ ${esc(r)}</button>`).join("");
+  const rows = state.risques.map((r, i) => `
+    <div class="dyn-row">
+      <span class="row-num">Risque ${i + 1}</span>
+      ${r._source === "naf" ? `<span class="naf-badge" id="naf-badge-risques-${i}">💡 suggestion — à vérifier</span>` : ""}
+      ${state.risques.length > 1 ? `<button type="button" class="remove-row" onclick="removeRisque(${i})">Supprimer</button>` : ""}
+      <div class="grid g3" style="margin-top:6px;">
+        ${fld(`risques.${i}.risque`, "Risque (ED 840)", { audio: true })}
+        ${fld(`risques.${i}.postes`, "Poste(s) concerné(s)", { audio: true })}
+      </div>
+      <div class="grid g1">${txt(`risques.${i}.elements`, "Éléments repérés (situation dangereuse, factuelle et technique)", { rows: 2, audio: true })}</div>
+      <div class="grid">
+        ${txt(`risques.${i}.moyens`, "Moyens de prévention existants", { rows: 2, audio: true })}
+        ${txt(`risques.${i}.conseils`, "Conseils prévention (+ référence STCS / INRS)", { rows: 2, audio: true })}
+      </div>
+    </div>`).join("");
+
+  const nbFilled = state.risques.filter(r => r.risque.trim()).length;
+  const minOk = nbFilled >= 8;
+  const counterHtml = `<div class="naf-status ${minOk ? "" : "muted"}" style="${minOk ? "" : "border-color:#E8A87C;background:#FCF3EC;"}">
+    ${minOk ? "✅" : "⚠️"} ${nbFilled} risque(s) renseigné(s) — minimum réglementaire recommandé : <b>8</b>.
+    ${minOk ? "" : ' <button type="button" class="navbtn primary" style="margin-left:6px;padding:6px 12px;font-size:12px;" onclick="prefillFromNAF(false)">Compléter jusqu\'à 8</button>'}
+  </div>`;
+
+  return `
+  <div class="card">
+    <h2>11. Risques — Produits chimiques</h2>
+    <div class="grid g3">
+      ${selField("s11_listeProduits", "Liste des produits communiquée au médecin du travail")}
+      ${selField("s11_fdsCommuniquees", "FDS communiquées au médecin du travail")}
+      ${selField("s11_fdsDisposition", "FDS à disposition des utilisateurs")}
+    </div>
+    <div class="grid g1">${txt("s11_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>
+  <div class="card">
+    <h2>Repérage des risques et conseils de prévention</h2>
+    <p class="hint">💡 Le préremplissage depuis le code NAF (page de garde) propose au moins 8 risques types ED 840 à adapter. Cliquez un risque ci-dessous pour ajouter une ligne manuellement, ou complétez librement. Visez 8 à 16 situations de travail.</p>
+    ${counterHtml}
+    <div class="risk-quickset">${chips}</div>
+    ${rows}
+    <button type="button" class="add-row-btn" onclick="addRisqueBlank()">+ Ajouter une ligne vierge</button>
+    <button type="button" class="add-row-btn" style="margin-top:8px;" onclick="prefillFromNAF(false)">🔄 Préremplir / compléter depuis le code NAF${state.g_codeNAF ? " (" + esc(state.g_codeNAF) + ")" : ""}</button>
+  </div>`;
+}
+
+function panelS12() {
+  return `
+  <div class="card">
+    <h2>12. Préconisations d'actions de prévention primaire — Conclusion</h2>
+    <p class="hint">Reprend automatiquement les 3 préconisations saisies en page de garde.</p>
+    <div class="preco-recap">
+      <div class="preco-item" style="background:var(--orange);">${dispVal(state.preco1)}</div>
+      <div class="preco-item" style="background:var(--orange); margin-top:6px;">${dispVal(state.preco2)}</div>
+      <div class="preco-item" style="background:var(--orange); margin-top:6px;">${dispVal(state.preco3)}</div>
+    </div>
+    <button type="button" class="navbtn" style="margin-top:12px;" onclick="goTo(0)">Modifier les préconisations →</button>
+    <div class="grid g1" style="margin-top:16px;">${txt("s12_commentaires", "Commentaires", { rows: 2 })}</div>
+  </div>`;
+}
+
+function panelS13() {
+  return `
+  <div class="card">
+    <h2>13. Documents remis</h2>
+    <div class="grid g1">${txt("s13_documents", "Documents remis à l'entreprise", { rows: 3 })}</div>
+  </div>`;
+}
+
+function panelS14() {
+  return `
+  <div class="card">
+    <h2>14. Historique des évolutions de la fiche d'entreprise</h2>
+    <div class="grid g1">${txt("s14_historique", "Historique", { rows: 3 })}</div>
+  </div>`;
+}
+
+const PANEL_RENDERERS = [panelGarde, panelS1, panelS2, panelS3, panelS4, panelS5, panelS6, panelS7, panelS8, panelS9, panelS10, panelS11, panelS12, panelS13, panelS14];
+
+// ================== RENDU GLOBAL DU FORMULAIRE ==================
+function renderNav() {
+  const nav = document.getElementById("navList");
+  nav.innerHTML = NAV_SECTIONS.map(s => `
+    <div class="nav-item ${s.id === currentPanel ? "active" : ""} ${isSectionFilled(s.id) ? "done" : ""}" data-nav="${s.id}">
+      <span class="nav-num">${isSectionFilled(s.id) && s.id !== currentPanel ? "✓" : s.id}</span>
+      <span>${esc(s.title)}</span>
+    </div>`).join("");
+  nav.querySelectorAll("[data-nav]").forEach(el => {
+    el.addEventListener("click", () => goTo(parseInt(el.getAttribute("data-nav"), 10)));
+  });
+}
+
+function isSectionFilled(id) {
+  const keysBySection = {
+    0: ["g_codeNAF", "g_libelle", "g_numAdherent", "g_medecin", "g_descriptif", "preco1", "preco2", "preco3"],
+    1: ["s1_adresse", "s1_telephone", "s1_cpNom"],
+    2: ["s2_cse_on", "s2_cssct_on", "s2_duerp_on"],
+    3: ["s3_cdi_f", "s3_cdi_h", "s3_cdd_f", "s3_cdd_h"],
+    4: ["s4_registre", "s4_atSans", "s4_atAvec"],
+    5: ["s5_alarme", "s5_extincteurs", "s5_trousse"],
+    6: ["s6_normal_nb", "s6_equipes_nb", "s6_tempsHebdo"],
+    7: ["s7_nettoyagePar", "s7_listeVetements"],
+    8: ["s8_fichesEcrites"],
+    9: ["s9_description"],
+    10: ["s10_vestiaires_disp"],
+    11: ["s11_listeProduits"],
+    12: ["s12_commentaires"],
+    13: ["s13_documents"],
+    14: ["s14_historique"],
+  };
+  const keys = keysBySection[id] || [];
+  const flatFilled = keys.some(k => String(getPath(state, k) || "").trim() !== "");
+  if (id === 8) return flatFilled || state.postes.some(p => p.intitule.trim() || p.taches.trim());
+  if (id === 11) return flatFilled || state.risques.some(r => r.risque.trim() || r.elements.trim());
+  return flatFilled;
+}
+
+function panelInnerHtml(i) {
+  return `${PANEL_RENDERERS[i]()}
+      <div class="nav-footer">
+        <button class="navbtn" ${i === 0 ? "disabled" : ""} onclick="goTo(${i - 1})">← Précédent</button>
+        <span style="font-size:12px;color:var(--ink-soft);">${i + 1} / ${NAV_SECTIONS.length}</span>
+        ${i === NAV_SECTIONS.length - 1
+          ? `<button class="navbtn primary" onclick="setMode('preview')">Voir l'aperçu FE →</button>`
+          : `<button class="navbtn primary" onclick="goTo(${i + 1})">Suivant →</button>`}
+      </div>`;
+}
+
+function renderPanels() {
+  const wrap = document.getElementById("formPanels");
+  wrap.innerHTML = NAV_SECTIONS.map((s, i) => `<div class="panel ${i === currentPanel ? "active" : ""}" id="panel-${i}">${panelInnerHtml(i)}</div>`).join("");
+  applyWordCounters();
+}
+
+// Reconstruit le contenu d'un panneau précis à partir de l'état courant (utilisé quand l'état
+// a pu changer pendant que ce panneau n'était pas affiché — ex : préremplissage NAF depuis la page de garde).
+function refreshPanel(idx) {
+  const el = document.getElementById(`panel-${idx}`);
+  if (!el) return;
+  el.innerHTML = panelInnerHtml(idx);
+  applyWordCounters();
+  if (idx === 3) refreshEffectifDisplay();
+}
+
+function applyWordCounters() {
+  document.querySelectorAll("[data-wc]").forEach(el => updateCounter(el));
+}
+function updateCounter(el) {
+  const id = el.getAttribute("data-wc");
+  const min = parseInt(el.getAttribute("data-wcmin"), 10);
+  const max = parseInt(el.getAttribute("data-wcmax"), 10);
+  const c = wordCount(el.value);
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.textContent = `${c} mots (cible ${min}–${max})`;
+  target.className = "counter" + (c > 0 && (c < min || c > max) ? " over" : "");
+}
+
+function goTo(idx) {
+  currentPanel = Math.max(0, Math.min(NAV_SECTIONS.length - 1, idx));
+  setMode("form");
+  refreshPanel(currentPanel);
+  document.querySelectorAll(".panel").forEach((p, i) => p.classList.toggle("active", i === currentPanel));
+  renderNav();
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById("btnModeForm").classList.toggle("active", m === "form");
+  document.getElementById("btnModePreview").classList.toggle("active", m === "preview");
+  document.querySelector(".nav").style.display = m === "form" ? "" : "none";
+  document.querySelector(".main").style.display = m === "form" ? "" : "none";
+  document.getElementById("previewWrap").style.display = m === "preview" ? "" : "none";
+  if (m === "preview") renderPreview();
+}
+
+function updateProgress() {
+  const done = NAV_SECTIONS.filter(s => isSectionFilled(s.id)).length;
+  document.getElementById("progressLabel").textContent = `${done} / ${NAV_SECTIONS.length}`;
+  document.getElementById("progressFill").style.width = `${Math.round((done / NAV_SECTIONS.length) * 100)}%`;
+  const title = (state.g_codeNAF || state.g_libelle) ? `FE — ${state.g_codeNAF || ""} ${state.g_libelle || ""}`.trim() : "Questionnaire de préparation — Fiche d'Entreprise";
+  document.getElementById("topTitle").textContent = title;
+}
+
+// ================== TOTAUX EFFECTIFS ==================
+function computeEffectifs() {
+  const n = k => parseInt(state[k], 10) || 0;
+  const cdiF = n("s3_cdi_f"), cdiH = n("s3_cdi_h");
+  const cddF = n("s3_cdd_f"), cddH = n("s3_cdd_h");
+  const intF = n("s3_interim_f"), intH = n("s3_interim_h");
+  const appF = n("s3_apprenti_f"), appH = n("s3_apprenti_h");
+  return {
+    cdi: cdiF + cdiH, cdd: cddF + cddH, interim: intF + intH, apprenti: appF + appH,
+    f: cdiF + cddF + intF + appF, h: cdiH + cddH + intH + appH,
+    grand: cdiF + cdiH + cddF + cddH + intF + intH + appF + appH,
+  };
+}
+function refreshEffectifDisplay() {
+  const table = document.getElementById("effectifTable");
+  if (!table) return;
+  const t = computeEffectifs();
+  Object.keys(t).forEach(k => {
+    const cell = table.querySelector(`[data-tot="${k}"]`);
+    if (cell) cell.textContent = t[k];
+  });
+}
+
+// ================== ROWS DYNAMIQUES ==================
+function addPoste() { state.postes.push(freshPoste()); saveState(); rerenderCurrentPanel(); }
+function removePoste(i) { state.postes.splice(i, 1); if (!state.postes.length) state.postes.push(freshPoste()); saveState(); rerenderCurrentPanel(); }
+function addRisqueFromChip(label) { state.risques.push(Object.assign(freshRisque(), { risque: label })); saveState(); rerenderCurrentPanel(); }
+function addRisqueBlank() { state.risques.push(freshRisque()); saveState(); rerenderCurrentPanel(); }
+function removeRisque(i) { state.risques.splice(i, 1); if (!state.risques.length) state.risques.push(freshRisque()); saveState(); rerenderCurrentPanel(); }
+
+// ================== PRÉREMPLISSAGE DEPUIS LE CODE NAF ==================
+function ensureMinRisques(min) {
+  if (state.risques.length >= min) return 0;
+  const existingLabels = new Set(state.risques.map(r => r.risque.trim().toLowerCase()).filter(Boolean));
+  let added = 0;
+  for (const label of RISK_LIST) {
+    if (state.risques.length >= min) break;
+    if (!existingLabels.has(label.toLowerCase())) {
+      state.risques.push(Object.assign(freshRisque(), { risque: label, _source: "naf" }));
+      existingLabels.add(label.toLowerCase());
+      added++;
+    }
+  }
+  return added;
+}
+
+function prefillFromNAF(silent) {
+  const code = (state.g_codeNAF || "").trim().toUpperCase();
+  if (!code) {
+    if (!silent) alert("Renseignez d'abord le code NAF en page de garde (rubrique « Identification »).");
+    return;
+  }
+  const profileKey = resolveNafProfileKey(code);
+  const profile = NAF_PROFILES[profileKey] || NAF_PROFILES.default;
+
+  // --- Postes (rubrique 8) ---
+  let addedPostes = 0;
+  const pristinePostes = state.postes.length === 1 && !state.postes[0].intitule.trim() && !state.postes[0].taches.trim();
+  profile.postes.forEach((p, idx) => {
+    const exists = state.postes.some(x => x.intitule.trim().toLowerCase() === p.intitule.toLowerCase());
+    if (exists) return;
+    const newRow = Object.assign(freshPoste(), p, { _source: "naf" });
+    if (pristinePostes && addedPostes === 0) { state.postes[0] = newRow; } else { state.postes.push(newRow); }
+    addedPostes++;
+  });
+
+  // --- Risques (rubrique 11) — au moins 8 au total ---
+  let addedRisques = 0;
+  const pristineRisques = state.risques.length === 1 && !state.risques[0].risque.trim();
+  profile.risques.forEach((r) => {
+    const exists = state.risques.some(x => x.risque.trim().toLowerCase() === r.risque.toLowerCase());
+    if (exists) return;
+    const newRow = Object.assign(freshRisque(), r, { _source: "naf" });
+    if (pristineRisques && addedRisques === 0) { state.risques[0] = newRow; } else { state.risques.push(newRow); }
+    addedRisques++;
+  });
+  const addedPad = ensureMinRisques(8);
+
+  state._prefilledFor = code;
+  saveState();
+  updateProgress();
+  renderNav();
+  if (currentPanel === 0 || currentPanel === 8 || currentPanel === 11) rerenderCurrentPanel();
+
+  if (!silent) {
+    alert(`Suggestions ajoutées : ${addedPostes} poste(s) et ${addedRisques + addedPad} risque(s) (rubrique 11 : ${state.risques.filter(r => r.risque.trim()).length} au total). Chaque ligne est à vérifier, adapter et compléter lors de la visite avant validation par le médecin du travail.`);
+  }
+}
+
+function maybeAutoPrefillFromNAF() {
+  const code = (state.g_codeNAF || "").trim().toUpperCase();
+  if (!code || state._prefilledFor === code) return;
+  const pristinePostes = state.postes.length === 1 && !state.postes[0].intitule.trim();
+  const pristineRisques = state.risques.length === 1 && !state.risques[0].risque.trim();
+  if (pristinePostes && pristineRisques) {
+    prefillFromNAF(true);
+    showToast("💡 Postes et risques préremplis à partir du code NAF — à vérifier sur site (voir rubriques 8 et 11).");
+  } else if (currentPanel === 0) {
+    rerenderCurrentPanel();
+  }
+}
+
+function showToast(msg) {
+  let el = document.getElementById("appToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "appToast";
+    el.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1E2530;color:#fff;padding:12px 18px;border-radius:8px;font-size:12.5px;max-width:min(90vw,480px);box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:999;transition:opacity .3s ease;";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = "1";
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => { el.style.opacity = "0"; }, 5000);
+}
+
+function rerenderCurrentPanel() {
+  const panel = document.getElementById(`panel-${currentPanel}`);
+  if (!panel) return;
+  panel.innerHTML = `${PANEL_RENDERERS[currentPanel]()}
+    <div class="nav-footer">
+      <button class="navbtn" ${currentPanel === 0 ? "disabled" : ""} onclick="goTo(${currentPanel - 1})">← Précédent</button>
+      <span style="font-size:12px;color:var(--ink-soft);">${currentPanel + 1} / ${NAV_SECTIONS.length}</span>
+      ${currentPanel === NAV_SECTIONS.length - 1
+        ? `<button class="navbtn primary" onclick="setMode('preview')">Voir l'aperçu FE →</button>`
+        : `<button class="navbtn primary" onclick="goTo(${currentPanel + 1})">Suivant →</button>`}
+    </div>`;
+  applyWordCounters();
+  refreshEffectifDisplay();
+}
+
+// ================== ÉCOUTEUR GLOBAL (délégation) ==================
+document.addEventListener("input", (e) => {
+  const key = e.target.getAttribute && e.target.getAttribute("data-bind");
+  if (!key) return;
+  setPath(state, key, e.target.value);
+  document.querySelectorAll(`[data-bind="${cssEsc(key)}"]`).forEach(el => { if (el !== e.target) el.value = e.target.value; });
+  saveState();
+  updateProgress();
+  if (e.target.hasAttribute("data-wc")) updateCounter(e.target);
+  if (key.startsWith("s3_")) refreshEffectifDisplay();
+  const dynMatch = key.match(/^(postes|risques)\.(\d+)\./);
+  if (dynMatch) clearNafBadge(dynMatch[1], parseInt(dynMatch[2], 10));
+  renderNav();
+});
+document.addEventListener("change", (e) => {
+  const key = e.target.getAttribute && e.target.getAttribute("data-bind");
+  if (!key || e.target.tagName !== "SELECT") return;
+  setPath(state, key, e.target.value);
+  saveState();
+  updateProgress();
+  renderNav();
+});
+// Déclenche le préremplissage automatique quand on quitte le champ Code NAF (blur ne "bubble" pas -> capture)
+document.addEventListener("blur", (e) => {
+  const key = e.target.getAttribute && e.target.getAttribute("data-bind");
+  if (key === "g_codeNAF") maybeAutoPrefillFromNAF();
+}, true);
+function clearNafBadge(kind, idx) {
+  const arr = kind === "postes" ? state.postes : state.risques;
+  if (arr[idx] && arr[idx]._source === "naf") {
+    arr[idx]._source = undefined;
+    const badge = document.getElementById(`naf-badge-${kind}-${idx}`);
+    if (badge) badge.style.display = "none";
+  }
+}
+function cssEsc(s) { return s.replace(/([.*+?^${}()|[\]\\])/g, "\\$1"); }
+
+// ================== APERÇU FE ==================
+function line(label, val) { return `<div class="pline"><b>${esc(label)} :</b> ${dispVal(val)}</div>`; }
+
+function renderPreview() {
+  const c = document.getElementById("previewContent");
+  const t = computeEffectifs();
+  const title = `${state.g_codeNAF || "/"} - ${state.g_libelle || "/"}`;
+
+  const sheet1 = `
+  <div class="sheet">
+    <div class="sheet-legal">Établie en application des articles R4624-46 à R4624-50 du Code du Travail</div>
+    <div class="banner">
+      <div class="logo-cell"><b>STCS</b><span>PRÉVENTION · SANTÉ · TRAVAIL</span></div>
+      <div class="doc-cell"><div class="r1">DOCUMENT RÉGLEMENTAIRE</div><div class="r2">FICHE D'ENTREPRISE</div></div>
+    </div>
+    <div class="sheet-title">${esc(title)}</div>
+    <div class="sheet-sub">N° Adhérent : ${dispVal(state.g_numAdherent)}</div>
+    <div class="p1-cols">
+      <div class="left">
+        ${line("Médecin du travail", state.g_medecin)}
+        ${line("Infirmière", state.g_infirmiere)}
+        ${line("Assistant médical", state.g_assistantMed)}
+        ${line("Centre de visite médicale", state.g_centreVisite)}
+      </div>
+      <div class="photobox"></div>
+    </div>
+    <div class="visit-block">
+      <div class="vt">Visite(s) de l'entreprise :</div>
+      <div class="vi">Réalisée(s) par : ${dispVal(state.g_visiteRealisee)}</div>
+      <div class="vi">Date(s) : ${dispVal(state.g_dateVisite)}</div>
+      <div class="vi">Interlocuteur(s) : ${dispVal(state.g_interlocuteurs)}</div>
+      <div class="vi">Lieux visités : ${dispVal(state.g_lieuxVisites)}</div>
+      <div class="vi">En activité : ${dispVal(state.g_enActivite)}</div>
+      <div class="vi">Photos : ${dispVal(state.g_photos)}</div>
+      <div class="vi" style="font-style:italic;">Commentaires : ${dispVal(state.g_commentairesVisite)}</div>
+    </div>
+    <div class="desc-block">
+      <div class="dt">Descriptif de l'activité et des projets de l'entreprise :</div>
+      <div>${dispVal(state.g_descriptif)}</div>
+    </div>
+    <div class="preco-box">
+      <h3>Préconisations prioritaires d'actions de prévention primaire</h3>
+      <div class="preco-item">× ${dispVal(state.preco1)}</div>
+      <div class="preco-item">× ${dispVal(state.preco2)}</div>
+      <div class="preco-item">× ${dispVal(state.preco3)}</div>
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 1 sur 6</span></div>
+  </div>`;
+
+  const sheet2 = `
+  <div class="sheet">
+    <div class="psec">
+      <h3>1 - Renseignements administratifs</h3>
+      <table class="ptable">
+        <tr><td class="lbl" style="width:30%">Adresse</td><td>${dispVal(state.s1_adresse)}</td></tr>
+        <tr><td class="lbl">Téléphone</td><td>${dispVal(state.s1_telephone)}</td></tr>
+        <tr><td class="lbl">Code NAF</td><td>${dispVal(state.g_codeNAF)}</td></tr>
+        <tr><td class="lbl">Convention collective</td><td>${dispVal(state.s1_conventionCollective)}</td></tr>
+        <tr><td class="lbl">Date d'adhésion STCS</td><td>${dispVal(state.s1_dateAdhesion)}</td></tr>
+      </table>
+      <h4>Contacts</h4>
+      <table class="ptable">
+        <tr><td class="lbl" style="width:30%">Contact principal</td><td>${dispVal(state.s1_cpNom)} — ${dispVal(state.s1_cpTel)} — ${dispVal(state.s1_cpMail)}</td></tr>
+        <tr><td class="lbl">Autre correspondant</td><td>${dispVal(state.s1_acNom)} — ${dispVal(state.s1_acTel)} — ${dispVal(state.s1_acMail)}</td></tr>
+      </table>
+      <div class="pcomment">Commentaires : ${dispVal(state.s1_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>2 - Fonctionnement de l'entreprise</h3>
+      <table class="ptable">
+        <tr><th>Instance / obligation</th><th style="width:15%">Oui/Non</th><th>Précision</th></tr>
+        <tr><td class="lbl">CSE (≥ 11 salariés)</td><td class="ctr">${dispVal(state.s2_cse_on)}</td><td>${dispVal(state.s2_cse_prec)}</td></tr>
+        <tr><td class="lbl">CSSCT (≥ 300 salariés)</td><td class="ctr">${dispVal(state.s2_cssct_on)}</td><td>${dispVal(state.s2_cssct_prec)}</td></tr>
+        <tr><td class="lbl">Règlement intérieur (≥ 50 salariés)</td><td class="ctr">${dispVal(state.s2_ri_on)}</td><td>${dispVal(state.s2_ri_prec)}</td></tr>
+        <tr><td class="lbl">DUERP</td><td class="ctr">${dispVal(state.s2_duerp_on)}</td><td>${dispVal(state.s2_duerp_prec)}</td></tr>
+        <tr><td class="lbl">Salarié désigné compétent SST</td><td class="ctr">${dispVal(state.s2_sal_on)}</td><td>${dispVal(state.s2_sal_prec)}</td></tr>
+        <tr><td class="lbl">Affichage obligatoire</td><td class="ctr">${dispVal(state.s2_affichage_on)}</td><td>${dispVal(state.s2_affichage_prec)}</td></tr>
+      </table>
+      <div class="pline">Nom du salarié désigné : ${dispVal(anonymize(state.s2_nomSalarie))}</div>
+      <div class="pcomment">Commentaires : ${dispVal(state.s2_commentaires)}</div>
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 2 sur 6</span></div>
+  </div>`;
+
+  const sheet3 = `
+  <div class="sheet">
+    <div class="psec">
+      <h3>3 - Effectifs</h3>
+      <table class="ptable">
+        <tr><th></th><th>Femmes</th><th>Hommes</th><th>Total</th></tr>
+        <tr><td class="lbl">CDI</td><td class="ctr">${state.s3_cdi_f || 0}</td><td class="ctr">${state.s3_cdi_h || 0}</td><td class="ctr"><b>${t.cdi}</b></td></tr>
+        <tr><td class="lbl">CDD</td><td class="ctr">${state.s3_cdd_f || 0}</td><td class="ctr">${state.s3_cdd_h || 0}</td><td class="ctr"><b>${t.cdd}</b></td></tr>
+        <tr><td class="lbl">Intérimaire</td><td class="ctr">${state.s3_interim_f || 0}</td><td class="ctr">${state.s3_interim_h || 0}</td><td class="ctr"><b>${t.interim}</b></td></tr>
+        <tr><td class="lbl">Apprenti</td><td class="ctr">${state.s3_apprenti_f || 0}</td><td class="ctr">${state.s3_apprenti_h || 0}</td><td class="ctr"><b>${t.apprenti}</b></td></tr>
+        <tr><td class="lbl">Total</td><td class="ctr"><b>${t.f}</b></td><td class="ctr"><b>${t.h}</b></td><td class="ctr"><b>${t.grand}</b></td></tr>
+      </table>
+      <div class="pline">Temps partiel : ${state.s3_tempsPartiel || 0}</div>
+      <div class="pline">Travailleur handicapé : ${state.s3_travHandicape || 0}</div>
+      <div class="pline">Dont nombre de salariés : ${dispVal(state.s3_dontNombre)}</div>
+      <div class="pcomment">Commentaires : ${dispVal(state.s3_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>4 - Sinistralité</h3>
+      <div class="pline">Registre des accidents bénins : ${dispVal(state.s4_registre)}</div>
+      <table class="ptable">
+        <tr><th>Type - Origine</th><th style="width:20%">Nombre</th></tr>
+        <tr><td class="lbl">Accidents du travail sans arrêt</td><td class="ctr">${dispVal(state.s4_atSans)}</td></tr>
+        <tr><td class="lbl">Accidents du travail avec arrêt</td><td class="ctr">${dispVal(state.s4_atAvec)}</td></tr>
+        <tr><td class="lbl">Maladies professionnelles</td><td class="ctr">${dispVal(state.s4_maladiesPro)}</td></tr>
+        <tr><td class="lbl">Maladies à caractère professionnel</td><td class="ctr">${dispVal(state.s4_maladiesCar)}</td></tr>
+      </table>
+      <div class="pcomment">Commentaires : ${dispVal(state.s4_commentaires)}</div>
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 3 sur 6</span></div>
+  </div>`;
+
+  const sheet4 = `
+  <div class="sheet">
+    <div class="psec">
+      <h3>5 - Organisation des secours</h3>
+      <h4>En cas d'incendie</h4>
+      ${line("Alarme sonore", state.s5_alarme)}
+      ${line("Extincteurs et autres moyens d'extinction", state.s5_extincteurs)}
+      ${line("Plan d'évacuation et consignes", state.s5_planEvac)}
+      <h4>En cas d'accident</h4>
+      ${line("Consignes conduite à tenir", state.s5_consignes)}
+      ${line("Trousse de premiers secours", state.s5_trousse)}
+      ${line("Infirmerie", state.s5_infirmerieOui)}
+      ${line("Défibrillateur", state.s5_defib)}
+      ${line("Sauveteurs secouristes du travail (SST) - Nombre", state.s5_sstNb)}
+      ${line("Pompiers volontaires - Nombre", state.s5_pompiersNb)}
+      ${line("Présence sur toutes les amplitudes horaires", state.s5_amplitudes)}
+      <div class="pcomment">Commentaires : ${dispVal(state.s5_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>6 - Organisation du travail et horaires</h3>
+      <table class="ptable">
+        <tr><th>Horaires</th><th style="width:18%">Nb salariés</th><th>Horaires, rythme</th></tr>
+        <tr><td class="lbl">Normal (jour)</td><td class="ctr">${dispVal(state.s6_normal_nb)}</td><td>${dispVal(state.s6_normal_rythme)}</td></tr>
+        <tr><td class="lbl">Équipes successives</td><td class="ctr">${dispVal(state.s6_equipes_nb)}</td><td>${dispVal(state.s6_equipes_rythme)}</td></tr>
+        <tr><td class="lbl">Horaires coupés (≥ 3h)</td><td class="ctr">${dispVal(state.s6_coupes_nb)}</td><td>${dispVal(state.s6_coupes_rythme)}</td></tr>
+        <tr><td class="lbl">De nuit</td><td class="ctr">${dispVal(state.s6_nuit_nb)}</td><td>${dispVal(state.s6_nuit_rythme)}</td></tr>
+        <tr><td class="lbl">Week-end</td><td class="ctr">${dispVal(state.s6_weekend_nb)}</td><td>${dispVal(state.s6_weekend_rythme)}</td></tr>
+        <tr><td class="lbl">Horaires atypiques</td><td class="ctr">${dispVal(state.s6_atypiques_nb)}</td><td>${dispVal(state.s6_atypiques_rythme)}</td></tr>
+        <tr><td class="lbl">Astreinte</td><td class="ctr">${dispVal(state.s6_astreinte_nb)}</td><td>${dispVal(state.s6_astreinte_rythme)}</td></tr>
+      </table>
+      <div class="pline">Temps de travail hebdomadaire : ${dispVal(state.s6_tempsHebdo)}</div>
+      <div class="pcomment">Commentaires : ${dispVal(state.s6_commentaires)}</div>
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 4 sur 6</span></div>
+  </div>`;
+
+  const postesRows = state.postes.filter(p => p.intitule || p.taches || p.groupe || p.nb).length
+    ? state.postes.map(p => `<tr><td>${dispVal(p.intitule)}</td><td>${dispVal(p.groupe)}</td><td>${dispVal(p.taches)}</td><td class="ctr">${dispVal(p.nb)}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty-note">Aucun poste renseigné</td></tr>`;
+
+  const sheet5 = `
+  <div class="sheet">
+    <div class="psec">
+      <h3>7 - Entretien</h3>
+      <h4>Locaux</h4>
+      ${line("Nettoyage assuré par", state.s7_nettoyagePar)}
+      ${line("Périodicité", state.s7_periodiciteNettoyage)}
+      ${line("Postes concernés", state.s7_postesNettoyage)}
+      <h4>Vêtements de travail</h4>
+      ${line("Liste des vêtements", state.s7_listeVetements)}
+      ${line("Fournis par l'entreprise", state.s7_fournisPar)}
+      ${line("Réalisé", state.s7_realiseVet)}
+      ${line("Périodicité", state.s7_periodiciteVet)}
+      <h4>Autres locaux</h4>
+      ${line("Local de restauration", state.s7_localRestauration)}
+      ${line("Toilettes", state.s7_toilettes)}
+      <div class="pcomment">Commentaires : ${dispVal(state.s7_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>8 - Postes de travail</h3>
+      <div class="pline">Fiches de postes écrites : ${dispVal(state.s8_fichesEcrites)}</div>
+      <table class="ptable">
+        <tr><th>Intitulé du poste</th><th>Groupe</th><th>Tâches</th><th style="width:12%">Nb salariés</th></tr>
+        ${postesRows}
+      </table>
+      <div class="pcomment">Commentaires : ${dispVal(state.s8_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>9 - Ambiance générale</h3>
+      <div class="pline"><b>Description générale :</b></div>
+      <div style="font-size:12px;">${dispVal(state.s9_description)}</div>
+      <div class="pcomment">Commentaires : ${dispVal(state.s9_commentaires)}</div>
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 5 sur 6</span></div>
+  </div>`;
+
+  const risqRows = state.risques.filter(r => r.risque || r.elements).length
+    ? state.risques.map(r => `<tr><td>${dispVal(r.risque)}</td><td>${dispVal(r.postes)}</td><td>${dispVal(r.elements)}</td><td>${dispVal(r.moyens)}</td><td>${dispVal(r.conseils)}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty-note">Aucun risque renseigné</td></tr>`;
+
+  const sheet6 = `
+  <div class="sheet">
+    <div class="psec">
+      <h3>10 - Locaux sociaux</h3>
+      <table class="ptable">
+        <tr><th></th><th>Disponible</th><th>Séparation F/H</th></tr>
+        <tr><td class="lbl">Vestiaires</td><td class="ctr">${dispVal(state.s10_vestiaires_disp)}</td><td class="ctr">${dispVal(state.s10_vestiaires_sep)}</td></tr>
+        <tr><td class="lbl">Douche</td><td class="ctr">${dispVal(state.s10_douche_disp)}</td><td class="ctr">${dispVal(state.s10_douche_sep)}</td></tr>
+        <tr><td class="lbl">Lavabos</td><td class="ctr">${dispVal(state.s10_lavabos_disp)}</td><td class="ctr">${dispVal(state.s10_lavabos_sep)}</td></tr>
+        <tr><td class="lbl">Essuie-mains</td><td class="ctr">${dispVal(state.s10_essuie_disp)}</td><td class="ctr">${dispVal(state.s10_essuie_sep)}</td></tr>
+        <tr><td class="lbl">Toilettes</td><td class="ctr">${dispVal(state.s10_toilettes_disp)}</td><td class="ctr">${dispVal(state.s10_toilettes_sep)}</td></tr>
+        <tr><td class="lbl">Armoires individuelles</td><td class="ctr">${dispVal(state.s10_armoires_disp)}</td><td class="ctr">${dispVal(state.s10_armoires_sep)}</td></tr>
+        <tr><td class="lbl">Distributeur d'eau</td><td class="ctr">${dispVal(state.s10_eau_disp)}</td><td class="ctr">${dispVal(state.s10_eau_sep)}</td></tr>
+        <tr><td class="lbl">Pause déjeuner</td><td class="ctr">${dispVal(state.s10_pause_disp)}</td><td class="ctr">${dispVal(state.s10_pause_sep)}</td></tr>
+        <tr><td class="lbl">Handicapés</td><td class="ctr">${dispVal(state.s10_handicapes_disp)}</td><td class="ctr">${dispVal(state.s10_handicapes_sep)}</td></tr>
+      </table>
+      <div class="pcomment">Commentaires : ${dispVal(state.s10_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>11 - Risques - Moyens de prévention - Conseils</h3>
+      <h4>Produits chimiques</h4>
+      ${line("Liste des produits communiquée au médecin du travail", state.s11_listeProduits)}
+      ${line("FDS communiquées au médecin du travail", state.s11_fdsCommuniquees)}
+      ${line("FDS à disposition des utilisateurs", state.s11_fdsDisposition)}
+      <div class="pcomment">Commentaires : ${dispVal(state.s11_commentaires)}</div>
+      <h4>Repérage des risques et conseils de prévention</h4>
+      <table class="ptable risk-table">
+        <tr><th style="width:13%">Risque</th><th style="width:12%">Poste(s)</th><th>Éléments repérés</th><th>Moyens de prévention</th><th>Conseils prévention</th></tr>
+        ${risqRows}
+      </table>
+    </div>
+    <div class="psec">
+      <h3>12 - Préconisations d'actions de prévention primaire (Conclusion)</h3>
+      <div class="preco-item">× ${dispVal(state.preco1)}</div>
+      <div class="preco-item" style="margin-top:5px;">× ${dispVal(state.preco2)}</div>
+      <div class="preco-item" style="margin-top:5px;">× ${dispVal(state.preco3)}</div>
+      <div class="pcomment">Commentaires : ${dispVal(state.s12_commentaires)}</div>
+    </div>
+    <div class="psec">
+      <h3>13 - Documents remis</h3>
+      <div style="font-size:12px;">${dispVal(state.s13_documents)}</div>
+    </div>
+    <div class="psec">
+      <h3>14 - Historique des évolutions de la fiche d'entreprise</h3>
+      <div style="font-size:12px;">${dispVal(state.s14_historique)}</div>
+    </div>
+    <div style="font-size:10px;font-style:italic;color:#777;border-top:1px solid #E1E5EA;padding-top:10px;margin-top:16px;">
+      Les données figurant sur la fiche d'entreprise sont issues : des observations réalisées lors de la visite par l'intervenant du STCS, des informations communiquées par l'entreprise, des informations issues du suivi individuel des salariés par le STCS. L'exhaustivité des données ne peut donc pas être garantie. Le symbole « / » correspond à « Non observé - Non renseigné ».
+    </div>
+    <div class="pagefoot"><span>FOR-PREV-265_V0_Fiche d'entreprise</span><span>© Santé Travail Cholet Saumur</span><span>Page 6 sur 6</span></div>
+  </div>`;
+
+  c.innerHTML = sheet1 + sheet2 + sheet3 + sheet4 + sheet5 + sheet6;
+}
+
+function anonymize(name) {
+  const s = (name || "").trim();
+  if (!s) return "";
+  return s.split(/\s+/).map(w => w.charAt(0).toUpperCase() + ".").join(" ");
+}
+
+// ================== EXPORT WORD (.doc) ==================
+function buildExportHtml() {
+  const content = document.getElementById("previewContent").innerHTML;
+  const styles = `
+    body{font-family:Calibri,Arial,sans-serif;color:#1E2530;}
+    .sheet{padding:0 0 26px; margin-bottom:26px; page-break-after:always;}
+    .sheet-legal{font-style:italic;font-size:9.5pt;text-decoration:underline;margin-bottom:12px;}
+    .banner{width:100%;border:1px solid #BFBFBF;border-collapse:collapse;margin-bottom:16px;}
+    .banner td{border:1px solid #BFBFBF;}
+    .sheet-title{text-align:center;color:#1F5C99;font-weight:bold;font-size:18pt;margin:14px 0 4px;}
+    .sheet-sub{text-align:center;font-size:11pt;margin-bottom:14px;}
+    .psec h3{color:#1F5C99;font-size:13pt;border-bottom:2px solid #1F5C99;padding-bottom:5px;margin:18px 0 8px;}
+    .psec h4{font-size:11pt;margin:10px 0 4px;}
+    .pline{font-size:10.5pt;margin:3px 0 3px 12px;}
+    .pcomment{font-size:10pt;font-style:italic;color:#555;margin:6px 0 0;}
+    .ptable{width:100%;border-collapse:collapse;font-size:10pt;margin:6px 0;}
+    .ptable th{background:#D9D9D9;border:1px solid #BFBFBF;padding:5px 6px;text-align:left;}
+    .ptable td{border:1px solid #D9D9D9;padding:5px 6px;}
+    .ptable td.lbl{background:#F6F8FA;font-weight:bold;}
+    .ptable td.ctr{text-align:center;}
+    .risk-table th{background:#1F5C99;color:#fff;}
+    .preco-box{border-top:2px solid #1F5C99;border-bottom:2px solid #1F5C99;padding:10px 0;}
+    .preco-item{background:#FCE4D6;font-size:10.5pt;padding:7px 9px;margin-bottom:5px;}
+    .pagefoot{display:none;}
+    .p1-cols{width:100%;}
+    .photobox{border:1px solid #BFBFBF;width:150px;height:100px;}
+    .empty-note{color:#999;font-style:italic;}
+  `;
+  return `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset="utf-8"><title>Fiche d'Entreprise</title>
+  <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+  <style>${styles}</style></head>
+  <body>${content}</body></html>`;
+}
+
+function exportWord() {
+  renderPreview();
+  const html = buildExportHtml();
+  const blob = new Blob(['\ufeff', html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const naf = (state.g_codeNAF || "FE").replace(/[^\w.-]/g, "");
+  const today = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `FE_${naf}_${today}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ================== INIT ==================
+function init() {
+  renderNav();
+  renderPanels();
+  updateProgress();
+  refreshEffectifDisplay();
+
+  document.getElementById("btnModeForm").addEventListener("click", () => setMode("form"));
+  document.getElementById("btnModePreview").addEventListener("click", () => setMode("preview"));
+  document.getElementById("btnPrint").addEventListener("click", () => { renderPreview(); setTimeout(() => window.print(), 100); });
+  document.getElementById("btnExportWord").addEventListener("click", exportWord);
+  document.getElementById("btnReset").addEventListener("click", () => {
+    if (confirm("Démarrer une nouvelle fiche vierge ? Les données actuelles seront perdues (pensez à exporter avant).")) {
+      state = defaultState();
+      saveState();
+      currentPanel = 0;
+      renderNav();
+      renderPanels();
+      updateProgress();
+      refreshEffectifDisplay();
+      setMode("form");
+    }
+  });
+}
+
+init();
+
+</script>
+</body>
+</html>
